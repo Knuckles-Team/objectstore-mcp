@@ -11,6 +11,29 @@ Storage, Azure Blob Storage, and a zero-infra local-filesystem backend**.
 
 *Version: 0.1.0*
 
+> **Documentation** — Installation, deployment, and usage across the API, CLI, and
+> MCP interfaces are maintained in [`docs/`](docs/index.md).
+
+## Table of Contents
+
+- [Overview](#overview)
+- [What it provides](#what-it-provides)
+- [Backend × capability matrix](#backend--capability-matrix)
+- [Installation](#installation)
+- [Configuration (environment)](#configuration-environment)
+- [Usage](#usage)
+- [MCP config](#mcp-config)
+- [Docker deployment](#docker-deployment)
+- [Development](#development)
+- [License](#license)
+
+## Overview
+
+`objectstore-mcp` wraps heterogeneous object stores behind one typed,
+deterministic MCP tool surface, plus an optional Pydantic-AI A2A agent server
+(`objectstore-agent`). Safety caps, explicit buckets, and dry-run-by-default
+batch deletes are enforced uniformly in the tool layer, regardless of backend.
+
 ## What it provides
 
 - **A multi-backend store abstraction** (`objectstore_mcp.api`,
@@ -20,11 +43,13 @@ Storage, Azure Blob Storage, and a zero-infra local-filesystem backend**.
 - **Three consolidated, action-routed MCP tools** (`objectstore-mcp`
   console script):
 
-  | Tool | Actions |
-  |---|---|
-  | `objects` | `list` (prefix/delimiter pagination), `head`, `get` (text/base64, size-capped), `put` (text/base64, size-capped), `copy`, `move`, `delete`, `delete_batch` (capped, dry-run by default), `presign`, `metadata_get`, `metadata_set` |
-  | `buckets` | `list`, `create`, `delete` (empty-only, opt-in), `exists`, `info`, `stores` |
-  | `transfer` | `upload`, `download`, `upload_dir`, `download_prefix` (all size/batch-capped) |
+  | Tool | Actions | Description |
+  |---|---|---|
+  | `objects` | `list` (prefix/delimiter pagination), `head`, `get` (text/base64, size-capped), `put` (text/base64, size-capped), `copy`, `move`, `delete`, `delete_batch` (capped, dry-run by default), `presign`, `metadata_get`, `metadata_set` | Single-object lifecycle and listing on any store |
+  | `buckets` | `list`, `create`, `delete` (empty-only, opt-in), `exists`, `info`, `stores` | Bucket/container admin and store registry introspection |
+  | `transfer` | `upload`, `download`, `upload_dir`, `download_prefix` (all size/batch-capped) | Local-filesystem ⇄ object-store transfer, single or by prefix |
+
+  The whole tool set toggles with `OBJECTSTORETOOL`.
 
 - **Named multi-store routing** — `OBJECTSTORE_STORES` JSON maps store names
   to `{backend, bucket?, endpoint?, profile?, ...}`; every tool takes an
@@ -53,7 +78,13 @@ pip install objectstore-mcp            # core: local filesystem backend only
 pip install objectstore-mcp[s3]        # + boto3 (S3, MinIO, R2)
 pip install objectstore-mcp[gcs]       # + google-cloud-storage
 pip install objectstore-mcp[azure]     # + azure-storage-blob
-pip install objectstore-mcp[all]       # everything
+pip install objectstore-mcp[all]       # everything (incl. MCP + agent extras)
+```
+
+Or pull the container image:
+
+```bash
+docker pull knucklessg1/objectstore-mcp:latest
 ```
 
 ## Configuration (environment)
@@ -70,6 +101,13 @@ pip install objectstore-mcp[all]       # everything
 | `OBJECTSTORE_MAX_LIST_KEYS` | `1000` | Cap on one listing page |
 | `OBJECTSTORE_ALLOW_DELETE` | `true` | Object deletes (delete/delete_batch/move) |
 | `OBJECTSTORE_ALLOW_BUCKET_DELETE` | `false` | Bucket deletes (empty buckets only) |
+| `OBJECTSTORETOOL` | `True` | Register the objectstore tool set |
+| `HOST` / `PORT` / `TRANSPORT` | `0.0.0.0` / `8000` / `stdio` | MCP server bind + transport (`stdio`, `streamable-http`, `sse`) |
+| `AUTH_TYPE` | `none` | MCP auth mode (container image) |
+| `ENABLE_OTEL` | `True` | OTEL/Langfuse telemetry export |
+| `EUNOMIA_TYPE` / `EUNOMIA_POLICY_FILE` | `none` / `mcp_policies.json` | Eunomia access-governance middleware |
+| `DEFAULT_AGENT_NAME` / `AGENT_DESCRIPTION` / `AGENT_SYSTEM_PROMPT` | identity defaults | A2A agent server identity overrides |
+| `MCP_URL` | _(empty)_ | MCP endpoint the A2A agent connects to |
 
 Provider credentials resolve through each SDK's own chain — boto3's
 resolution order for S3 (env keys, `~/.aws` profiles via the store's
@@ -109,6 +147,40 @@ Example tool calls (any MCP client):
 {"tool": "objects", "arguments": {"store": "media", "action": "delete_batch", "params_json": "{\"bucket\": \"media-prod\", \"prefix\": \"tmp/\"}"}}
 {"tool": "objects", "arguments": {"store": "media", "action": "delete_batch", "params_json": "{\"bucket\": \"media-prod\", \"prefix\": \"tmp/\", \"dry_run\": false}"}}
 ```
+
+## MCP config
+
+```json
+{
+  "mcpServers": {
+    "objectstore-mcp": {
+      "command": "uv",
+      "args": ["run", "objectstore-mcp"],
+      "env": {
+        "OBJECTSTORE_STORES": "{\"minio\": {\"backend\": \"s3\", \"endpoint\": \"http://minio.arpa:9000\"}}",
+        "OBJECTSTORE_DEFAULT_STORE": "local"
+      }
+    }
+  }
+}
+```
+
+Run the A2A agent server against a live MCP server:
+
+```bash
+objectstore-agent --mcp-url http://localhost:8000/mcp --host 0.0.0.0 --port 9001
+```
+
+## Docker deployment
+
+```bash
+docker compose -f docker/mcp.compose.yml up -d      # MCP server only
+docker compose -f docker/agent.compose.yml up -d    # MCP + A2A agent
+curl -s http://localhost:8000/health                 # {"status":"OK"}
+```
+
+Both services read configuration from `../.env` (copy
+[`.env.example`](.env.example)); see [`docs/deployment.md`](docs/deployment.md).
 
 ## Development
 

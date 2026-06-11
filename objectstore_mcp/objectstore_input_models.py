@@ -1,12 +1,9 @@
 #!/usr/bin/python
-# coding: utf-8
 """Pydantic input models for objectstore-mcp tool parameters (CONCEPT:OBJ-1.2).
 
 Typed contracts for the ``params_json`` payloads accepted by the three
 action-routed MCP tools (``objects``, ``buckets``, ``transfer``).
 """
-
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -24,10 +21,10 @@ class ObjectPutInput(BaseModel):
     bucket: str = Field(description="Bucket/container name.")
     key: str = Field(description="Object key to write.")
     content: str = Field(description="Inline content (text, or base64 when binary).")
-    content_type: Optional[str] = Field(
+    content_type: str | None = Field(
         default=None, description="MIME type stored with the object."
     )
-    encoding: Optional[str] = Field(
+    encoding: str | None = Field(
         default=None, description="'text' (default) or 'base64'."
     )
 
@@ -36,11 +33,11 @@ class ObjectListInput(BaseModel):
     """Input model for the ``objects`` 'list' action."""
 
     bucket: str = Field(description="Bucket/container name.")
-    prefix: Optional[str] = Field(default=None, description="Key prefix filter.")
-    max_keys: Optional[int] = Field(
+    prefix: str | None = Field(default=None, description="Key prefix filter.")
+    max_keys: int | None = Field(
         default=None, description="Page size (clamped to the server list cap)."
     )
-    continuation_token: Optional[str] = Field(
+    continuation_token: str | None = Field(
         default=None, description="Opaque token from the previous page."
     )
 
@@ -58,10 +55,10 @@ class TransferInput(BaseModel):
     """Input model for the ``transfer`` tool (upload/download)."""
 
     bucket: str = Field(description="Bucket/container name.")
-    key: Optional[str] = Field(
+    key: str | None = Field(
         default=None, description="Single object key (omit when using prefix)."
     )
-    prefix: Optional[str] = Field(
+    prefix: str | None = Field(
         default=None, description="Key prefix for bulk transfer."
     )
     path: str = Field(description="Local filesystem path (file or directory).")
