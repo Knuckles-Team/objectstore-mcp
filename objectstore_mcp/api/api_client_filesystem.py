@@ -15,10 +15,10 @@ import hashlib
 import json
 import mimetypes
 import shutil
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
-from objectstore_mcp.backends.base import (
+from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     BucketInfo,
     BucketNotEmptyError,
@@ -105,7 +105,9 @@ class FilesystemBackend:
             key=key,
             size=stat.st_size,
             etag=digest,
-            last_modified=datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
+            last_modified=datetime.fromtimestamp(
+                stat.st_mtime, tz=timezone.utc
+            ).isoformat(),
             content_type=content_type,
             metadata=dict(sidecar.get("metadata") or {}),
         )
@@ -122,7 +124,7 @@ class FilesystemBackend:
         stat = path.stat()
         return BucketInfo(
             name=path.name,
-            created=datetime.fromtimestamp(stat.st_ctime, tz=UTC).isoformat(),
+            created=datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
             location=str(path),
         )
 

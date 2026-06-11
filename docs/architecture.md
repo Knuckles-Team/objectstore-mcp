@@ -3,20 +3,20 @@
 ```mermaid
 flowchart LR
     subgraph client["MCP Client / Agent"]
-        A[tool call: action + params_json + store]
+        A["tool call: action + params_json + store"]
     end
 
     subgraph server["objectstore-mcp (FastMCP)"]
         T1[objects]
         T2[buckets]
         T3[transfer]
-        SG[Safety governor<br/>caps + delete flags + dry-run]
-        REG[Store registry<br/>OBJECTSTORE_STORES]
+        SG["Safety governor<br/>caps + delete flags + dry-run"]
+        REG["Store registry<br/>OBJECTSTORE_STORES"]
     end
 
     subgraph backends["ObjectStoreBackend protocol"]
         FS[FilesystemBackend]
-        S3[S3Backend<br/>AWS / MinIO / R2]
+        S3["S3Backend<br/>AWS / MinIO / R2"]
         GCS[GCSBackend]
         AZ[AzureBlobBackend]
     end
@@ -40,8 +40,8 @@ flowchart LR
 |---|---|---|
 | Tool surface | `objectstore_mcp/mcp/mcp_objectstore.py` | Action routing, parameter parsing, text/base64 encoding, **all safety enforcement** (CONCEPT:OBJ-1.2/1.3) |
 | Store registry | `objectstore_mcp/config.py`, `objectstore_mcp/auth.py` | `OBJECTSTORE_STORES` parsing, default-store resolution, per-store backend cache (CONCEPT:OBJ-1.1) |
-| Backend protocol | `objectstore_mcp/backends/base.py` | The provider-neutral contract, dataclasses, error taxonomy, name/key validation (CONCEPT:OBJ-1.0) |
-| Backends | `objectstore_mcp/backends/{filesystem,s3,gcs,azure_blob}.py` | Pure storage adapters; lazy SDK imports (CONCEPT:OBJ-1.4/1.5) |
+| Backend protocol | `objectstore_mcp/api/api_client_base.py` | The provider-neutral contract, dataclasses, error taxonomy, name/key validation (CONCEPT:OBJ-1.0) |
+| Backends | `objectstore_mcp/api/api_client_{filesystem,s3,gcs,azure_blob}.py` | Pure storage adapters; lazy SDK imports (CONCEPT:OBJ-1.4/1.5) |
 
 ## Design decisions
 

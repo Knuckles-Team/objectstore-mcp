@@ -17,8 +17,8 @@ from typing import Any
 from fastmcp import FastMCP
 from pydantic import Field
 
+from objectstore_mcp.api.api_client_base import ObjectStoreError
 from objectstore_mcp.auth import get_backend
-from objectstore_mcp.backends.base import ObjectStoreError
 from objectstore_mcp.config import Limits, StoreConfig, load_limits, load_stores
 
 _FORBIDDEN_KEY_CHARS = ("*", "?")
@@ -58,6 +58,7 @@ def _explicit_single_key(p: dict[str, Any], operation: str) -> tuple[str, str]:
             f"not allowed in key {key!r}. Use action='delete_batch' for prefixes."
         )
     return bucket, key
+
 
 def _decode_payload(p: dict[str, Any], limits: Limits) -> bytes:
     if "text" in p and "content_base64" in p:
@@ -141,7 +142,9 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
 
         if action == "list":
             bucket = _bucket_for(p, config)
-            max_keys = min(int(p.get("max_keys", limits.max_list_keys)), limits.max_list_keys)
+            max_keys = min(
+                int(p.get("max_keys", limits.max_list_keys)), limits.max_list_keys
+            )
             page = backend.list_objects(
                 bucket,
                 prefix=p.get("prefix", ""),
@@ -155,7 +158,9 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
             return backend.head_object(bucket, p["key"]).to_dict()
         if action == "get":
             bucket = _bucket_for(p, config)
-            cap = min(int(p.get("max_bytes", limits.max_get_bytes)), limits.max_get_bytes)
+            cap = min(
+                int(p.get("max_bytes", limits.max_get_bytes)), limits.max_get_bytes
+            )
             data = backend.get_object(bucket, p["key"], max_bytes=cap)
             return {
                 "bucket": bucket,
@@ -206,14 +211,16 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
                 raise ValueError(
                     "Object deletes are disabled (OBJECTSTORE_ALLOW_DELETE=false)."
                 )
-            bucket = p.get("bucket")
+            bucket = str(p.get("bucket") or "")
             prefix = p.get("prefix")
             if not bucket or not prefix:
                 raise ValueError(
                     "delete_batch requires an explicit 'bucket' and a non-empty "
                     "'prefix' (refusing to bulk-delete a whole bucket)."
                 )
-            max_keys = min(int(p.get("max_keys", limits.max_batch_keys)), limits.max_batch_keys)
+            max_keys = min(
+                int(p.get("max_keys", limits.max_batch_keys)), limits.max_batch_keys
+            )
             dry_run = bool(p.get("dry_run", True))
             page = backend.list_objects(bucket, prefix=prefix, max_keys=max_keys)
             keys = [obj.key for obj in page.objects]
@@ -304,11 +311,9 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
                     "Bucket deletes are disabled. Set "
                     "OBJECTSTORE_ALLOW_BUCKET_DELETE=true to enable them."
                 )
-            bucket = p.get("bucket")
+            bucket = str(p.get("bucket") or "")
             if not bucket:
-                raise ValueError(
-                    "delete requires an explicit 'bucket' in params_json."
-                )
+                raise ValueError("delete requires an explicit 'bucket' in params_json.")
             backend.delete_bucket(bucket)
             return {"deleted": True, "bucket": bucket}
         if action == "exists":
@@ -381,7 +386,7 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
             local = Path(p["local_path"]).expanduser()
             if local.exists() and not p.get("overwrite", False):
                 raise ValueError(
-                    f"local_path {str(local)!r} exists; pass \"overwrite\": true."
+                    f'local_path {str(local)!r} exists; pass "overwrite": true.'
                 )
             data = backend.get_object(
                 bucket, p["key"], max_bytes=limits.max_transfer_bytes
@@ -400,7 +405,9 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
             if not local_dir.is_dir():
                 raise ValueError(f"local_dir {str(local_dir)!r} is not a directory.")
             prefix = p.get("prefix", "")
-            max_keys = min(int(p.get("max_keys", limits.max_batch_keys)), limits.max_batch_keys)
+            max_keys = min(
+                int(p.get("max_keys", limits.max_batch_keys)), limits.max_batch_keys
+            )
             files = sorted(f for f in local_dir.rglob("*") if f.is_file())
             if len(files) > max_keys:
                 raise ValueError(
@@ -424,7 +431,9 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
             bucket = _bucket_for(p, config)
             local_dir = Path(p["local_dir"]).expanduser()
             prefix = p.get("prefix", "")
-            max_keys = min(int(p.get("max_keys", limits.max_batch_keys)), limits.max_batch_keys)
+            max_keys = min(
+                int(p.get("max_keys", limits.max_batch_keys)), limits.max_batch_keys
+            )
             overwrite = bool(p.get("overwrite", False))
             page = backend.list_objects(bucket, prefix=prefix, max_keys=max_keys)
             total = sum(obj.size for obj in page.objects)
@@ -435,12 +444,10 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
                 )
             downloaded = []
             for obj in page.objects:
-                relative = obj.key[len(prefix):] if prefix else obj.key
+                relative = obj.key[len(prefix) :] if prefix else obj.key
                 target = local_dir / relative.lstrip("/")
                 if target.exists() and not overwrite:
-                    raise ValueError(
-                        f"{str(target)!r} exists; pass \"overwrite\": true."
-                    )
+                    raise ValueError(f'{str(target)!r} exists; pass "overwrite": true.')
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(
                     backend.get_object(

@@ -5,9 +5,9 @@ import json
 import pytest
 
 from objectstore_mcp.auth import get_backend, resolve_store
-from objectstore_mcp.backends import BACKEND_ALIASES, create_backend
-from objectstore_mcp.backends.base import ObjectStoreError
-from objectstore_mcp.backends.filesystem import FilesystemBackend
+from objectstore_mcp.api import BACKEND_ALIASES, create_backend
+from objectstore_mcp.api.api_client_base import ObjectStoreError
+from objectstore_mcp.api.api_client_filesystem import FilesystemBackend
 from objectstore_mcp.config import (
     LOCAL_STORE_NAME,
     StoreConfig,

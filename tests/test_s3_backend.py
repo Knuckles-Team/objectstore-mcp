@@ -7,18 +7,18 @@ A moto-backed integration path is available via the ``test-s3`` extra.
 """
 
 import io
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import pytest
 
-from objectstore_mcp.backends.base import (
+from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     NotFoundError,
     ObjectStoreError,
 )
-from objectstore_mcp.backends.s3 import S3Backend
+from objectstore_mcp.api.api_client_s3 import S3Backend
 
-NOW = datetime(2026, 6, 11, tzinfo=UTC)
+NOW = datetime(2026, 6, 11, tzinfo=timezone.utc)
 
 
 class FakeClientError(Exception):

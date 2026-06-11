@@ -1,22 +1,28 @@
+version: '3.8'
+
 services:
-  objectstore-mcp:
+  objectstore-mcp-mcp:
     image: knucklessg1/objectstore-mcp:latest
+    container_name: objectstore-mcp-mcp
+    hostname: objectstore-mcp-mcp
+    restart: always
+    env_file:
+      - ../.env
     environment:
-      TRANSPORT: streamable-http
-      HOST: 0.0.0.0
-      PORT: 8000
-      OBJECTSTORE_STORES: ${OBJECTSTORE_STORES:-}
-      OBJECTSTORE_DEFAULT_STORE: ${OBJECTSTORE_DEFAULT_STORE:-local}
-      OBJECTSTORE_FS_ROOT: /data
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
-      AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING:-}
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT=8000
+      - TRANSPORT=streamable-http
     ports:
       - "8000:8000"
-    volumes:
-      - objectstore-data:/data
-
-volumes:
-  objectstore-data:
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

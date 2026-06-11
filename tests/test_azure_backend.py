@@ -1,20 +1,20 @@
 """Azure Blob backend tests with a mocked BlobServiceClient."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 
-from objectstore_mcp.backends.azure_blob import AzureBlobBackend
-from objectstore_mcp.backends.base import (
+from objectstore_mcp.api.api_client_azure_blob import AzureBlobBackend
+from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     BucketNotEmptyError,
     NotFoundError,
     ObjectStoreError,
 )
 
-NOW = datetime(2026, 6, 11, tzinfo=UTC)
+NOW = datetime(2026, 6, 11, tzinfo=timezone.utc)
 
 
 class FakeNotFound(Exception):

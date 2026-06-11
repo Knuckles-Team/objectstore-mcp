@@ -10,7 +10,7 @@ Requires the ``s3`` extra: ``pip install objectstore-mcp[s3]``.
 
 from typing import Any
 
-from objectstore_mcp.backends.base import (
+from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     BucketInfo,
     BucketNotEmptyError,
@@ -27,9 +27,7 @@ from objectstore_mcp.backends.base import (
 _NOT_FOUND_CODES = {"404", "NoSuchKey", "NoSuchBucket", "NotFound"}
 
 
-def _build_client(
-    endpoint: str | None, profile: str | None, region: str | None
-) -> Any:
+def _build_client(endpoint: str | None, profile: str | None, region: str | None) -> Any:
     try:
         import boto3
     except ImportError as exc:  # pragma: no cover - exercised via mocked import
@@ -54,8 +52,8 @@ class S3Backend:
         client: Any | None = None,
     ):
         """``client`` injects a pre-built boto3 S3 client (used by tests)."""
-        self.client = client if client is not None else _build_client(
-            endpoint, profile, region
+        self.client = (
+            client if client is not None else _build_client(endpoint, profile, region)
         )
 
     def capabilities(self) -> dict[str, bool]:

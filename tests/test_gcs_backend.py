@@ -1,20 +1,20 @@
 """GCS backend tests with a mocked google-cloud-storage client."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 
-from objectstore_mcp.backends.base import (
+from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     BucketNotEmptyError,
     NotFoundError,
     ObjectStoreError,
 )
-from objectstore_mcp.backends.gcs import GCSBackend
+from objectstore_mcp.api.api_client_gcs import GCSBackend
 
-NOW = datetime(2026, 6, 11, tzinfo=UTC)
+NOW = datetime(2026, 6, 11, tzinfo=timezone.utc)
 
 
 class FakeNotFound(Exception):

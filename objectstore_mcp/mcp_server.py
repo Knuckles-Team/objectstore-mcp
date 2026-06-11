@@ -1,16 +1,19 @@
 """Main FastMCP server and tool registration for objectstore-mcp."""
 
+import os
 import sys
 from typing import Any
 
+from agent_utilities.base_utilities import to_boolean
 from agent_utilities.mcp_utilities import create_mcp_server
 from dotenv import find_dotenv, load_dotenv
 from fastmcp.utilities.logging import get_logger
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from objectstore_mcp import __version__
 from objectstore_mcp.mcp.mcp_objectstore import register_objectstore_tools
+
+__version__ = "0.1.0"
 
 logger = get_logger(name="objectstore_mcp")
 
@@ -35,7 +38,8 @@ def get_mcp_instance() -> tuple[Any, ...]:
     async def health_check(request: Request) -> JSONResponse:
         return JSONResponse({"status": "OK"})
 
-    register_objectstore_tools(mcp)
+    if to_boolean(os.getenv("OBJECTSTORETOOL", "True")):
+        register_objectstore_tools(mcp)
 
     for mw in middlewares:
         mcp.add_middleware(mw)

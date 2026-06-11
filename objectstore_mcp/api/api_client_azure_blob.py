@@ -9,10 +9,10 @@ Requires the ``azure`` extra: ``pip install objectstore-mcp[azure]``.
 """
 
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from objectstore_mcp.backends.base import (
+from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     BucketInfo,
     BucketNotEmptyError,
@@ -63,13 +63,9 @@ class AzureBlobBackend:
 
     backend_type = "azure"
 
-    def __init__(
-        self, connection_string: str | None = None, client: Any | None = None
-    ):
+    def __init__(self, connection_string: str | None = None, client: Any | None = None):
         """``client`` injects a pre-built BlobServiceClient (used by tests)."""
-        self.client = (
-            client if client is not None else _build_client(connection_string)
-        )
+        self.client = client if client is not None else _build_client(connection_string)
 
     def capabilities(self) -> dict[str, bool]:
         return {
@@ -232,9 +228,7 @@ class AzureBlobBackend:
             try:
                 from azure.storage.blob import ContentSettings
 
-                kwargs["content_settings"] = ContentSettings(
-                    content_type=content_type
-                )
+                kwargs["content_settings"] = ContentSettings(content_type=content_type)
             except ImportError:
                 # Injected-client mode (tests) without the SDK installed:
                 # pass the raw content type through.
@@ -309,6 +303,6 @@ class AzureBlobBackend:
             blob_name=key,
             account_key=account_key,
             permission=permission,
-            expiry=datetime.now(UTC) + timedelta(seconds=expires_in),
+            expiry=datetime.now(timezone.utc) + timedelta(seconds=expires_in),
         )
         return f"{self._blob_client(bucket, key).url}?{sas}"

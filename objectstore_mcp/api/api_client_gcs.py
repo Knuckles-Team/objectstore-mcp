@@ -11,7 +11,7 @@ Requires the ``gcs`` extra: ``pip install objectstore-mcp[gcs]``.
 from datetime import timedelta
 from typing import Any
 
-from objectstore_mcp.backends.base import (
+from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     BucketInfo,
     BucketNotEmptyError,

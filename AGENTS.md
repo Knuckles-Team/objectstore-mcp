@@ -5,11 +5,12 @@
 
 ## Project Structure
 - `objectstore_mcp/`: Main server code
-  - `backends/`: One module per provider, all implementing the
-    `ObjectStoreBackend` protocol in `backends/base.py` (CONCEPT:OBJ-1.0)
+  - `api/`: One client module per provider (`api_client_{filesystem,s3,gcs,azure_blob}.py`),
+    all implementing the `ObjectStoreBackend` protocol in `api/api_client_base.py` (CONCEPT:OBJ-1.0)
   - `mcp/mcp_objectstore.py`: The action-routed tool surface and the **only**
     place safety policy (caps, delete flags, dry-run) is enforced
-  - `config.py` / `auth.py`: Named-store registry and backend cache
+  - `config.py` / `auth.py`: Named-store registry, backend cache, and `get_client()`
+  - `agent_server.py`: Pydantic-AI A2A agent server (console script `objectstore-agent`)
 - `tests/`: Test suite (`test_backend_conformance.py` is the protocol contract)
 - `docs/`: Architecture, usage, and the `CONCEPT:OBJ-*` registry
 

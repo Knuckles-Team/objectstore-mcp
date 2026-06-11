@@ -17,8 +17,8 @@ backend + settings) a tool call targets:
 Backends are built once per store and cached for the process lifetime.
 """
 
-from objectstore_mcp.backends import ObjectStoreBackend, create_backend
-from objectstore_mcp.backends.base import ObjectStoreError
+from objectstore_mcp.api import ObjectStoreBackend, create_backend
+from objectstore_mcp.api.api_client_base import ObjectStoreError
 from objectstore_mcp.config import StoreConfig, default_store_name, load_stores
 
 _BACKEND_CACHE: dict[str, ObjectStoreBackend] = {}
@@ -49,3 +49,16 @@ def get_backend(store: str | None = None) -> tuple[ObjectStoreBackend, StoreConf
 def reset_backend_cache() -> None:
     """Drop cached backends (tests and config reloads)."""
     _BACKEND_CACHE.clear()
+
+
+def get_client(store: str | None = None) -> ObjectStoreBackend:
+    """Golden ``get_client()`` entry point: backend for a named store.
+
+    Wraps any resolution/credential failure in
+    ``RuntimeError("AUTHENTICATION ERROR: ...")`` per the connector standard.
+    """
+    try:
+        backend, _config = get_backend(store)
+    except Exception as exc:
+        raise RuntimeError(f"AUTHENTICATION ERROR: {exc}") from exc
+    return backend

@@ -9,8 +9,8 @@ import pytest
 moto = pytest.importorskip("moto", reason="moto not installed (test-s3 extra)")
 boto3 = pytest.importorskip("boto3", reason="boto3 not installed (s3 extra)")
 
-from objectstore_mcp.backends.base import NotFoundError  # noqa: E402
-from objectstore_mcp.backends.s3 import S3Backend  # noqa: E402
+from objectstore_mcp.api.api_client_base import NotFoundError  # noqa: E402
+from objectstore_mcp.api.api_client_s3 import S3Backend  # noqa: E402
 
 
 @pytest.fixture

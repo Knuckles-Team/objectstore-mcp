@@ -8,7 +8,7 @@ MinIO integration profile) runs this whole suite against it unchanged.
 
 import pytest
 
-from objectstore_mcp.backends.base import (
+from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     BucketNotEmptyError,
     InvalidNameError,
@@ -210,7 +210,7 @@ class TestListing:
         assert page.prefixes == ["logs/2026/", "logs/old/"]
 
     def test_pagination_walks_everything(self, backend):
-        collected = []
+        collected: list = []
         token = None
         pages = 0
         while True:

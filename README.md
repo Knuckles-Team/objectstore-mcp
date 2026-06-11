@@ -13,7 +13,7 @@ Storage, Azure Blob Storage, and a zero-infra local-filesystem backend**.
 
 ## What it provides
 
-- **A multi-backend store abstraction** (`objectstore_mcp.backends`,
+- **A multi-backend store abstraction** (`objectstore_mcp.api`,
   CONCEPT:OBJ-1.0) — every provider implements the same
   `ObjectStoreBackend` protocol, validated by a single conformance test
   suite that runs for real against the filesystem backend.

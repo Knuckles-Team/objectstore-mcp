@@ -3,7 +3,7 @@
 import pytest
 
 from objectstore_mcp.auth import reset_backend_cache
-from objectstore_mcp.backends.filesystem import FilesystemBackend
+from objectstore_mcp.api.api_client_filesystem import FilesystemBackend
 
 ENV_VARS = [
     "OBJECTSTORE_STORES",

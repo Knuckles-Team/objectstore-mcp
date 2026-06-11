@@ -1,5 +1,4 @@
-include README.md
 include LICENSE
-include CHANGELOG.md
-include mcp_config.json
-recursive-include docs *.md
+include README.md
+include requirements.txt
+recursive-include objectstore_mcp *.py *.json
