@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "objectstore": {
+      "command": "objectstore-mcp",
+      "args": ["--transport", "stdio"],
+      "env": {
+        "OBJECTSTORE_STORES": "",
+        "OBJECTSTORE_DEFAULT_STORE": "local"
+      }
+    }
+  }
+}
