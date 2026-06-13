@@ -13,7 +13,7 @@ from starlette.responses import JSONResponse
 
 from objectstore_mcp.mcp.mcp_objectstore import register_objectstore_tools
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 logger = get_logger(name="objectstore_mcp")
 
