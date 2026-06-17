@@ -1,7 +1,7 @@
 {
   "name": "objectstore-mcp-agent",
   "type": "agent",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Object-storage agent: list/get/put/copy/move/delete objects, bucket admin, and bulk transfer across S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a zero-infra local filesystem store.",
   "url": "https://github.com/Knuckles-Team/objectstore-mcp/tree/main",
   "license": "MIT",

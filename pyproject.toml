@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objectstore-mcp"
-version = "0.4.0"
+version = "0.5.0"
 description = "Object storage (S3/MinIO/R2, Google Cloud Storage, Azure Blob, local filesystem) API + MCP Server + A2A Server for Agentic AI!"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
