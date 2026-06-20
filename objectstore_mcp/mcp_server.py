@@ -1,16 +1,20 @@
 """Main FastMCP server and tool registration for objectstore-mcp."""
 
-import os
 import sys
 from typing import Any
 
-from agent_utilities.base_utilities import to_boolean
-from agent_utilities.mcp_utilities import create_mcp_server, load_config
+from agent_utilities.mcp_utilities import (
+    create_mcp_server,
+    load_config,
+    register_tool_surface,
+)
 from fastmcp.utilities.logging import get_logger
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from objectstore_mcp.mcp.mcp_objectstore import register_objectstore_tools
+from objectstore_mcp.api import ObjectStoreBackend
+from objectstore_mcp.auth import get_client
+from objectstore_mcp.mcp.mcp_objectstore import register_objectstore_tools  # noqa: F401
 
 __version__ = "0.5.0"
 
@@ -37,16 +41,21 @@ def get_mcp_instance() -> tuple[Any, ...]:
     async def health_check(request: Request) -> JSONResponse:
         return JSONResponse({"status": "OK"})
 
-    if to_boolean(os.getenv("OBJECTSTORETOOL", "True")):
-        register_objectstore_tools(mcp)
+    registered_tags = register_tool_surface(
+        mcp,
+        client_cls=ObjectStoreBackend,
+        get_client=get_client,
+        service="objectstore-mcp",
+        tools_module=sys.modules[__name__],
+    )
 
     for mw in middlewares:
         mcp.add_middleware(mw)
-    return mcp, args, middlewares
+    return mcp, args, middlewares, registered_tags
 
 
 def mcp_server() -> None:
-    mcp, args, _middlewares = get_mcp_instance()
+    mcp, args, _middlewares, *_ = get_mcp_instance()
     print(f"ObjectStore MCP v{__version__}", file=sys.stderr)
     if args.transport == "streamable-http":
         mcp.run(transport="streamable-http", host=args.host, port=args.port)
