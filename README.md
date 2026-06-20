@@ -68,9 +68,9 @@ batch deletes are enforced uniformly in the tool layer, regardless of backend.
 
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
-| `buckets` | `BUCKETSTOOL` | Manage buckets/containers and inspect configured stores. |
-| `objects` | `OBJECTSTOOL` | List, read, write, copy, move, delete, presign, and tag objects. |
-| `transfer` | `TRANSFERTOOL` | Move data between the local filesystem and object storage. |
+| `buckets` | `OBJECTSTORETOOL` | Manage buckets/containers and inspect configured stores. |
+| `objects` | `OBJECTSTORETOOL` | List, read, write, copy, move, delete, presign, and tag objects. |
+| `transfer` | `OBJECTSTORETOOL` | Move data between the local filesystem and object storage. |
 
 _3 action-routed tools (default `MCP_TOOL_MODE=condensed`). Each is enabled unless its toggle is set false; set `MCP_TOOL_MODE=verbose` (or `both`) for the 1:1 per-operation surface. Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
