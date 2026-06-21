@@ -31,10 +31,10 @@ objectstore-mcp = "objectstore_mcp.mcp_server:mcp_server"
 objectstore-agent = "objectstore_mcp.agent_server:agent_server"
 
 [project.entry-points."agent_utilities.skill_providers"]
-modular-contrib = "objectstore_mcp.skills"
+objectstore-mcp = "objectstore_mcp.skills"
 
 [project.entry-points."agent_utilities.prompt_providers"]
-modular-contrib = "objectstore_mcp.prompts"
+objectstore-mcp = "objectstore_mcp.prompts"
 
 [tool.setuptools]
 include-package-data = true
