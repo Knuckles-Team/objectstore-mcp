@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   objectstore-mcp-mcp:
-    image: knucklessg1/objectstore-mcp:latest
+    image: knucklessg1/objectstore-mcp:mcp
     container_name: objectstore-mcp-mcp
     hostname: objectstore-mcp-mcp
     restart: always
