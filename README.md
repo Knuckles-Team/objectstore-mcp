@@ -298,3 +298,62 @@ to just this package. Ask your agent to **"deploy `objectstore-mcp` with agent-o
 Secrets are read-existing + seeded via `vault_sync` — you are only prompted for what's missing.
 
 <!-- END agent-os-genesis-deploy -->
+
+## Environment Variables
+
+<!-- ENV-VARS-TABLE:START -->
+
+#### Package environment variables
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `HOST` | `0.0.0.0` |  |
+| `PORT` | `8000` |  |
+| `TRANSPORT` | `stdio` | options: stdio, streamable-http, sse |
+| `ENABLE_OTEL` | `True` |  |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:8080/api/public/otel` |  |
+| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` | `pk-...` |  |
+| `OTEL_EXPORTER_OTLP_SECRET_KEY` | `sk-...` |  |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` |  |
+| `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
+| `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
+| `EUNOMIA_REMOTE_URL` | `http://eunomia-server:8000` |  |
+| `OBJECTSTORE_STORES` | `{"media": {"backend": "s3", "bucket": "media-prod", "profile": "prod"}, "minio": {"backend": "s3", "endpoint": "http://minio.arpa:9000"}, "reports": {"backend": "gcs", "bucket": "acme-reports"}, "archive": {"backend": "azure", "bucket": "archive"}}` | Named stores (JSON). The zero-infra "local" filesystem store always exists. |
+| `OBJECTSTORE_DEFAULT_STORE` | `local` |  |
+| `OBJECTSTORE_FS_ROOT` | `~/.local/share/objectstore-mcp` |  |
+| `OBJECTSTORE_MAX_GET_BYTES` | `10485760` | Safety limits (bytes / keys) |
+| `OBJECTSTORE_MAX_PUT_BYTES` | `10485760` |  |
+| `OBJECTSTORE_MAX_TRANSFER_BYTES` | `104857600` |  |
+| `OBJECTSTORE_MAX_BATCH_KEYS` | `100` |  |
+| `OBJECTSTORE_MAX_LIST_KEYS` | `1000` |  |
+| `OBJECTSTORE_ALLOW_DELETE` | `true` |  |
+| `OBJECTSTORE_ALLOW_BUCKET_DELETE` | `false` |  |
+| `AWS_ACCESS_KEY_ID` | `/ AWS_SECRET_ACCESS_KEY= / AWS_PROFILE=  (boto3 chain)` | Provider credentials resolve through each SDK's own chain: |
+| `GOOGLE_APPLICATION_CREDENTIALS` | `/path/to/service-account.json` |  |
+| `AZURE_STORAGE_CONNECTION_STRING` | — |  |
+| `DEFAULT_AGENT_NAME` | `ObjectStore Agent` |  |
+| `AGENT_DESCRIPTION` | `AI agent for object-storage operations.` |  |
+| `AGENT_SYSTEM_PROMPT` | — |  |
+| `MCP_URL` | `http://localhost:8000/mcp` |  |
+| `OBJECTSTORETOOL` | `True` |  |
+
+#### Inherited agent-utilities variables (apply to every connector)
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `MCP_TOOL_MODE` | `condensed` | Tool surface: `condensed` | `verbose` | `both` |
+| `MCP_ENABLED_TOOLS` | — | Comma-separated tool allow-list |
+| `MCP_DISABLED_TOOLS` | — | Comma-separated tool deny-list |
+| `MCP_ENABLED_TAGS` | — | Comma-separated tag allow-list |
+| `MCP_DISABLED_TAGS` | — | Comma-separated tag deny-list |
+| `MCP_CLIENT_AUTH` | — | Outbound MCP auth (`oidc-client-credentials` for fleet calls) |
+| `OIDC_CLIENT_ID` | — | OIDC client id (service-account auth) |
+| `OIDC_CLIENT_SECRET` | — | OIDC client secret (service-account auth) |
+| `DEBUG` | `False` | Verbose logging |
+| `PYTHONUNBUFFERED` | `1` | Unbuffered stdout (recommended in containers) |
+| `PROVIDER` | `openai` | LLM provider for the agent |
+| `MODEL_ID` | `gpt-4o` | Model id for the agent |
+| `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
+
+_29 package + 13 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+<!-- ENV-VARS-TABLE:END -->
