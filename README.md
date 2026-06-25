@@ -88,19 +88,60 @@ _3 action-routed tools (default `MCP_TOOL_MODE=condensed`). Each is enabled unle
 
 ## Installation
 
+Pick the extra that matches what you want to run (provider extras are additive):
+
+| Extra | Installs | Use when |
+|-------|----------|----------|
+| `objectstore-mcp[mcp]` | Slim MCP server only (`agent-utilities[mcp]` — FastMCP/FastAPI) | You only run the **MCP server** (smallest install / image) |
+| `objectstore-mcp[agent]` | Full agent runtime (`agent-utilities[agent,logfire]` — Pydantic AI + the epistemic-graph engine) | You run the **integrated A2A agent** |
+| `objectstore-mcp[all]` | Everything (`mcp` + `agent` + `s3` + `gcs` + `azure` + `logfire`) | Development / both surfaces |
+
 ```bash
 pip install objectstore-mcp            # core: local filesystem backend only
-pip install objectstore-mcp[s3]        # + boto3 (S3, MinIO, R2)
-pip install objectstore-mcp[gcs]       # + google-cloud-storage
-pip install objectstore-mcp[azure]     # + azure-storage-blob
-pip install objectstore-mcp[all]       # everything (incl. MCP + agent extras)
+pip install objectstore-mcp[mcp]       # slim MCP server (FastMCP/FastAPI)
+pip install objectstore-mcp[agent]     # full A2A agent runtime + epistemic-graph engine
+pip install objectstore-mcp[mcp,s3]    # + boto3 (S3, MinIO, R2)
+pip install objectstore-mcp[mcp,gcs]   # + google-cloud-storage
+pip install objectstore-mcp[mcp,azure] # + azure-storage-blob
+pip install objectstore-mcp[all]       # everything (MCP + agent + all providers)
 ```
 
-Or pull the container image:
+### Container images (`:mcp` vs `:agent`)
+
+One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
+
+| Image tag | Build target | Contents | Entrypoint |
+|-----------|--------------|----------|------------|
+| `knucklessg1/objectstore-mcp:mcp` | `--target mcp` | `objectstore-mcp[mcp]` — **slim**, no engine/`pydantic-ai`/`dspy`/`llama-index`/`tree-sitter` | `objectstore-mcp` |
+| `knucklessg1/objectstore-mcp:latest` | `--target agent` (default) | `objectstore-mcp[agent]` — **full** agent runtime + epistemic-graph engine | `objectstore-agent` |
 
 ```bash
-docker pull knucklessg1/objectstore-mcp:latest
+docker build --target mcp   -t knucklessg1/objectstore-mcp:mcp    docker/   # slim MCP server
+docker build --target agent -t knucklessg1/objectstore-mcp:latest docker/   # full agent
 ```
+
+Or pull a prebuilt image:
+
+```bash
+docker pull knucklessg1/objectstore-mcp:mcp      # slim MCP server
+docker pull knucklessg1/objectstore-mcp:latest   # full agent (default)
+```
+
+> The `:mcp` tag is the **slim MCP-server image** (built from
+> `docker/Dockerfile --target mcp`, installing `objectstore-mcp[mcp]`). The default
+> `:latest` tag is the **full agent image** (`--target agent`, `objectstore-mcp[agent]`)
+> which also bundles the Pydantic AI agent and the epistemic-graph engine — use it
+> when you run `objectstore-agent` (the agent), not just the MCP server.
+
+### Knowledge-graph database (`epistemic-graph`)
+
+The **full agent** (`[agent]` / `:latest`) embeds the **epistemic-graph** engine (pulled in
+transitively via `agent-utilities[agent]`). For production — or to share one knowledge graph
+across multiple agents — run **epistemic-graph as its own database container** and point the
+agent at it instead of embedding it. Deployment recipes (single-node + Raft HA), connection
+config, and the full database architecture (with diagrams) are documented in the
+[epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
+The slim `[mcp]` server does **not** require the database.
 
 ## Configuration (environment)
 
@@ -165,12 +206,21 @@ Example tool calls (any MCP client):
 
 ## MCP config
 
+> **Install the slim `[mcp]` extra.** The example below installs
+> `objectstore-mcp[mcp]` — the MCP-server extra that pulls only the FastMCP /
+> FastAPI tooling (`agent-utilities[mcp]`). It deliberately **excludes** the heavy
+> agent runtime (the epistemic-graph engine, `pydantic-ai`, `dspy`, `llama-index`,
+> `tree-sitter`), so `uvx`/container installs are dramatically smaller and faster.
+> Add the provider extras you need (`[mcp,s3]`, `[mcp,gcs]`, `[mcp,azure]`); use the
+> full `[agent]` extra only when you need the integrated Pydantic AI agent
+> (see [Installation](#installation)).
+
 ```json
 {
   "mcpServers": {
     "objectstore-mcp": {
-      "command": "uv",
-      "args": ["run", "objectstore-mcp"],
+      "command": "uvx",
+      "args": ["--from", "objectstore-mcp[mcp]", "objectstore-mcp"],
       "env": {
         "OBJECTSTORE_STORES": "{\"minio\": {\"backend\": \"s3\", \"endpoint\": \"http://minio.arpa:9000\"}}",
         "OBJECTSTORE_DEFAULT_STORE": "local"
