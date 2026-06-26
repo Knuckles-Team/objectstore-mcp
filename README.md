@@ -66,13 +66,40 @@ batch deletes are enforced uniformly in the tool layer, regardless of backend.
 
 <!-- MCP-TOOLS-TABLE:START -->
 
+#### Condensed action-routed tools (default — `MCP_TOOL_MODE=condensed`)
+
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
 | `buckets` | `OBJECTSTORETOOL` | Manage buckets/containers and inspect configured stores. |
 | `objects` | `OBJECTSTORETOOL` | List, read, write, copy, move, delete, presign, and tag objects. |
 | `transfer` | `OBJECTSTORETOOL` | Move data between the local filesystem and object storage. |
 
-_3 action-routed tools (default `MCP_TOOL_MODE=condensed`). Each is enabled unless its toggle is set false; set `MCP_TOOL_MODE=verbose` (or `both`) for the 1:1 per-operation surface. Auto-generated — do not edit._
+#### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
+
+<details>
+<summary>15 per-operation tools — one per public API method (click to expand)</summary>
+
+| MCP Tool | Toggle Env Var | Description |
+|----------|----------------|-------------|
+| `objectstore_bucket_exists` | `OBJECT_STORE_BACKENDTOOL` | Return True when the bucket exists. |
+| `objectstore_bucket_info` | `OBJECT_STORE_BACKENDTOOL` | Describe one bucket. Raises NotFoundError when absent. |
+| `objectstore_capabilities` | `OBJECT_STORE_BACKENDTOOL` | Advertise optional capabilities. |
+| `objectstore_copy_object` | `OBJECT_STORE_BACKENDTOOL` | Server-side (where possible) copy of one object. |
+| `objectstore_create_bucket` | `OBJECT_STORE_BACKENDTOOL` | Create a bucket. Raises AlreadyExistsError if it exists. |
+| `objectstore_delete_bucket` | `OBJECT_STORE_BACKENDTOOL` | Delete an EMPTY bucket. Raises BucketNotEmptyError otherwise. |
+| `objectstore_delete_object` | `OBJECT_STORE_BACKENDTOOL` | Delete exactly one object. Raises NotFoundError when absent. |
+| `objectstore_get_object` | `OBJECT_STORE_BACKENDTOOL` | Download an object's bytes. Raises ObjectStoreError when the |
+| `objectstore_get_object_metadata` | `OBJECT_STORE_BACKENDTOOL` | Return the user metadata of one object. |
+| `objectstore_head_object` | `OBJECT_STORE_BACKENDTOOL` | Stat one object without downloading it. |
+| `objectstore_list_buckets` | `OBJECT_STORE_BACKENDTOOL` | List all buckets/containers visible to the credentials. |
+| `objectstore_list_objects` | `OBJECT_STORE_BACKENDTOOL` | List objects under ``prefix``, optionally folding at ``delimiter``. |
+| `objectstore_presigned_url` | `OBJECT_STORE_BACKENDTOOL` | Mint a presigned URL. Raises UnsupportedOperationError when the |
+| `objectstore_put_object` | `OBJECT_STORE_BACKENDTOOL` | Upload bytes to ``bucket/key`` (overwrites). |
+| `objectstore_set_object_metadata` | `OBJECT_STORE_BACKENDTOOL` | Replace the user metadata of one object. |
+
+</details>
+
+_3 action-routed tool(s) (default) · 15 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 ## Backend × capability matrix
@@ -328,9 +355,7 @@ Secrets are read-existing + seeded via `vault_sync` — you are only prompted fo
 | `OBJECTSTORE_MAX_LIST_KEYS` | `1000` |  |
 | `OBJECTSTORE_ALLOW_DELETE` | `true` |  |
 | `OBJECTSTORE_ALLOW_BUCKET_DELETE` | `false` |  |
-| `AWS_ACCESS_KEY_ID` | `/ AWS_SECRET_ACCESS_KEY= / AWS_PROFILE=  (boto3 chain)` | Provider credentials resolve through each SDK's own chain: |
-| `GOOGLE_APPLICATION_CREDENTIALS` | `/path/to/service-account.json` |  |
-| `AZURE_STORAGE_CONNECTION_STRING` | — |  |
+| `AZURE_STORAGE_CONNECTION_STRING` | — | Azure is the exception — the code reads this connection string directly: |
 | `DEFAULT_AGENT_NAME` | `ObjectStore Agent` |  |
 | `AGENT_DESCRIPTION` | `AI agent for object-storage operations.` |  |
 | `AGENT_SYSTEM_PROMPT` | — |  |
@@ -355,5 +380,5 @@ Secrets are read-existing + seeded via `vault_sync` — you are only prompted fo
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_29 package + 13 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_27 package + 13 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
