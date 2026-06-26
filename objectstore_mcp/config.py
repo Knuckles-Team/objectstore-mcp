@@ -36,15 +36,13 @@ LOCAL_STORE_NAME = "local"
 _TRUE = {"1", "true", "yes", "on"}
 
 
-def _env_bool(name: str, default: bool) -> bool:
-    raw = os.getenv(name)
+def _as_bool(raw: str | None, default: bool) -> bool:
     if raw is None or raw.strip() == "":
         return default
     return raw.strip().lower() in _TRUE
 
 
-def _env_int(name: str, default: int) -> int:
-    raw = os.getenv(name)
+def _as_int(name: str, raw: str | None, default: int) -> int:
     if raw is None or raw.strip() == "":
         return default
     try:
@@ -85,15 +83,35 @@ class Limits:
 def load_limits() -> Limits:
     """Build the safety limits from the environment."""
     return Limits(
-        max_get_bytes=_env_int("OBJECTSTORE_MAX_GET_BYTES", Limits.max_get_bytes),
-        max_put_bytes=_env_int("OBJECTSTORE_MAX_PUT_BYTES", Limits.max_put_bytes),
-        max_transfer_bytes=_env_int(
-            "OBJECTSTORE_MAX_TRANSFER_BYTES", Limits.max_transfer_bytes
+        max_get_bytes=_as_int(
+            "OBJECTSTORE_MAX_GET_BYTES",
+            os.getenv("OBJECTSTORE_MAX_GET_BYTES"),
+            Limits.max_get_bytes,
         ),
-        max_batch_keys=_env_int("OBJECTSTORE_MAX_BATCH_KEYS", Limits.max_batch_keys),
-        max_list_keys=_env_int("OBJECTSTORE_MAX_LIST_KEYS", Limits.max_list_keys),
-        allow_object_delete=_env_bool("OBJECTSTORE_ALLOW_DELETE", True),
-        allow_bucket_delete=_env_bool("OBJECTSTORE_ALLOW_BUCKET_DELETE", False),
+        max_put_bytes=_as_int(
+            "OBJECTSTORE_MAX_PUT_BYTES",
+            os.getenv("OBJECTSTORE_MAX_PUT_BYTES"),
+            Limits.max_put_bytes,
+        ),
+        max_transfer_bytes=_as_int(
+            "OBJECTSTORE_MAX_TRANSFER_BYTES",
+            os.getenv("OBJECTSTORE_MAX_TRANSFER_BYTES"),
+            Limits.max_transfer_bytes,
+        ),
+        max_batch_keys=_as_int(
+            "OBJECTSTORE_MAX_BATCH_KEYS",
+            os.getenv("OBJECTSTORE_MAX_BATCH_KEYS"),
+            Limits.max_batch_keys,
+        ),
+        max_list_keys=_as_int(
+            "OBJECTSTORE_MAX_LIST_KEYS",
+            os.getenv("OBJECTSTORE_MAX_LIST_KEYS"),
+            Limits.max_list_keys,
+        ),
+        allow_object_delete=_as_bool(os.getenv("OBJECTSTORE_ALLOW_DELETE"), True),
+        allow_bucket_delete=_as_bool(
+            os.getenv("OBJECTSTORE_ALLOW_BUCKET_DELETE"), False
+        ),
     )
 
 
