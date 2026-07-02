@@ -9,7 +9,7 @@ The object-storage connector for the agent-utilities fleet: **one MCP tool
 surface over S3 and S3-compatible stores (MinIO, Cloudflare R2), Google Cloud
 Storage, Azure Blob Storage, and a zero-infra local-filesystem backend**.
 
-*Version: 1.0.0*
+*Version: 1.0.1*
 
 > **Documentation** — Installation, deployment, and usage across the API, CLI, and
 > MCP interfaces are maintained in [`docs/`](docs/index.md).
