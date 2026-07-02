@@ -8,24 +8,18 @@
       ],
       "env": {
         "MCP_TOOL_MODE": "condensed",
-        "FASTMCP_LOG_LEVEL": "<YOUR_FASTMCP_LOG_LEVEL>",
-        "NO_COLOR": "<YOUR_NO_COLOR>",
-        "TERM": "<YOUR_TERM>",
-        "AGENT_DESCRIPTION": "<YOUR_AGENT_DESCRIPTION>",
-        "AGENT_SYSTEM_PROMPT": "<YOUR_AGENT_SYSTEM_PROMPT>",
-        "DEFAULT_AGENT_NAME": "<YOUR_DEFAULT_AGENT_NAME>",
-        "MCP_URL": "<YOUR_MCP_URL>",
-        "OBJECTSTORE_STORES": "<YOUR_OBJECTSTORE_STORES>",
+        "AZURE_STORAGE_CONNECTION_STRING": "",
+        "OBJECTSTORETOOL": "True",
+        "OBJECTSTORE_ALLOW_BUCKET_DELETE": "false",
+        "OBJECTSTORE_ALLOW_DELETE": "true",
         "OBJECTSTORE_DEFAULT_STORE": "local",
-        "OBJECTSTORE_FS_ROOT": "<YOUR_OBJECTSTORE_FS_ROOT>",
+        "OBJECTSTORE_FS_ROOT": "~/.local/share/objectstore-mcp",
+        "OBJECTSTORE_MAX_BATCH_KEYS": "100",
         "OBJECTSTORE_MAX_GET_BYTES": "10485760",
+        "OBJECTSTORE_MAX_LIST_KEYS": "1000",
         "OBJECTSTORE_MAX_PUT_BYTES": "10485760",
         "OBJECTSTORE_MAX_TRANSFER_BYTES": "104857600",
-        "OBJECTSTORE_MAX_BATCH_KEYS": "100",
-        "OBJECTSTORE_MAX_LIST_KEYS": "1000",
-        "OBJECTSTORE_ALLOW_DELETE": "true",
-        "OBJECTSTORE_ALLOW_BUCKET_DELETE": "false",
-        "OBJECTSTORETOOL": "True"
+        "OBJECTSTORE_STORES": "{\"media\": {\"backend\": \"s3\", \"bucket\": \"media-prod\", \"profile\": \"prod\"}, \"minio\": {\"backend\": \"s3\", \"endpoint\": \"http://minio.arpa:9000\"}, \"reports\": {\"backend\": \"gcs\", \"bucket\": \"acme-reports\"}, \"archive\": {\"backend\": \"azure\", \"bucket\": \"archive\"}}"
       }
     }
   }
