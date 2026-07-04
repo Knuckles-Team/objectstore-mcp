@@ -1,4 +1,4 @@
-"""Google Cloud Storage backend (CONCEPT:OBJ-1.5).
+"""Google Cloud Storage backend (CONCEPT:OB-OS.governance.obj-3).
 
 Credentials resolve through Google's Application Default Credentials chain
 (``GOOGLE_APPLICATION_CREDENTIALS`` service-account file, gcloud user creds,

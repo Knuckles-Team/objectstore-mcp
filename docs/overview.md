@@ -33,8 +33,8 @@ This project implements or inherits the following ecosystem concepts:
 | Concept ID | Description | Source |
 |:-----------|:------------|:-------|
 | ECO-4.1 | MCP & Universal Skills | `agent-utilities` (inherited) |
-| ECO-4.2 | A2A Network & Consensus | `agent-utilities` (inherited) |
-| CONCEPT:OBJ-1.0 | Multi-backend store abstraction | [`concepts.md`](concepts.md) |
-| CONCEPT:OBJ-1.3 | Safety governor | [`concepts.md`](concepts.md) |
+| AU-ECO.toolkit.journey-map-narrative | A2A Network & Consensus | `agent-utilities` (inherited) |
+| CONCEPT:OB-OS.governance.every-provider-implements-same | Multi-backend store abstraction | [`concepts.md`](concepts.md) |
+| CONCEPT:OB-OS.safety.size-caps-list-batch | Safety governor | [`concepts.md`](concepts.md) |
 
 > 📖 **Full Registry**: See [`agent-utilities/docs/overview.md`](https://github.com/Knuckles-Team/agent-utilities/blob/main/docs/overview.md) for the complete 5-Pillar concept index.

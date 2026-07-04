@@ -1,4 +1,4 @@
-"""Object-store backend abstraction (CONCEPT:OBJ-1.0).
+"""Object-store backend abstraction (CONCEPT:OB-OS.governance.every-provider-implements-same).
 
 A backend is a thin, bucket-agnostic adapter over one object-storage
 technology (local filesystem, S3/S3-compatible, Google Cloud Storage, Azure

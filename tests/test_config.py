@@ -1,4 +1,4 @@
-"""Store-registry and limits configuration tests (CONCEPT:OBJ-1.1)."""
+"""Store-registry and limits configuration tests (CONCEPT:OB-OS.config.obj)."""
 
 import json
 

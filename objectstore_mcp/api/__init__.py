@@ -1,7 +1,7 @@
 """Backend factory: map a store's ``backend`` string to an implementation.
 
 Imports are lazy so the core install carries zero cloud dependencies
-(CONCEPT:OBJ-1.5); a missing SDK surfaces as :class:`MissingDependencyError`
+(CONCEPT:OB-OS.governance.obj-3); a missing SDK surfaces as :class:`MissingDependencyError`
 naming the pip extra to install.
 """
 

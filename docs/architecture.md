@@ -38,10 +38,10 @@ flowchart LR
 
 | Layer | Module | Responsibility |
 |---|---|---|
-| Tool surface | `objectstore_mcp/mcp/mcp_objectstore.py` | Action routing, parameter parsing, text/base64 encoding, **all safety enforcement** (CONCEPT:OBJ-1.2/1.3) |
-| Store registry | `objectstore_mcp/config.py`, `objectstore_mcp/auth.py` | `OBJECTSTORE_STORES` parsing, default-store resolution, per-store backend cache (CONCEPT:OBJ-1.1) |
-| Backend protocol | `objectstore_mcp/api/api_client_base.py` | The provider-neutral contract, dataclasses, error taxonomy, name/key validation (CONCEPT:OBJ-1.0) |
-| Backends | `objectstore_mcp/api/api_client_{filesystem,s3,gcs,azure_blob}.py` | Pure storage adapters; lazy SDK imports (CONCEPT:OBJ-1.4/1.5) |
+| Tool surface | `objectstore_mcp/mcp/mcp_objectstore.py` | Action routing, parameter parsing, text/base64 encoding, **all safety enforcement** (CONCEPT:OB-OS.governance.obj-2/1.3) |
+| Store registry | `objectstore_mcp/config.py`, `objectstore_mcp/auth.py` | `OBJECTSTORE_STORES` parsing, default-store resolution, per-store backend cache (CONCEPT:OB-OS.config.obj) |
+| Backend protocol | `objectstore_mcp/api/api_client_base.py` | The provider-neutral contract, dataclasses, error taxonomy, name/key validation (CONCEPT:OB-OS.governance.every-provider-implements-same) |
+| Backends | `objectstore_mcp/api/api_client_{filesystem,s3,gcs,azure_blob}.py` | Pure storage adapters; lazy SDK imports (CONCEPT:OB-OS.governance.zero-infra-default/1.5) |
 
 ## Design decisions
 

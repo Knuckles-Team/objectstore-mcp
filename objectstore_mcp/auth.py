@@ -1,4 +1,4 @@
-"""Store resolution and per-backend credential wiring (CONCEPT:OBJ-1.1).
+"""Store resolution and per-backend credential wiring (CONCEPT:OB-OS.config.obj).
 
 Credentials are never read here directly — each provider SDK resolves its own
 chain, and this module only decides *which* store (and therefore which

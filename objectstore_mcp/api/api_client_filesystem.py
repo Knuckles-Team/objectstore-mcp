@@ -1,4 +1,4 @@
-"""Local-filesystem object store (CONCEPT:OBJ-1.4) — the zero-infra default.
+"""Local-filesystem object store (CONCEPT:OB-OS.governance.zero-infra-default) — the zero-infra default.
 
 Layout under a configurable root directory::
 

@@ -1,4 +1,4 @@
-"""Protocol-conformance suite (CONCEPT:OBJ-1.0).
+"""Protocol-conformance suite (CONCEPT:OB-OS.governance.every-provider-implements-same).
 
 Every behavior the :class:`ObjectStoreBackend` protocol promises is exercised
 here for real against the filesystem backend — no mocks. Cloud backends reuse

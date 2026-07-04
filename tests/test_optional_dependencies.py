@@ -1,4 +1,4 @@
-"""Optional-dependency behavior (CONCEPT:OBJ-1.5).
+"""Optional-dependency behavior (CONCEPT:OB-OS.governance.obj-3).
 
 The core install must import cleanly with zero cloud SDKs, and each cloud
 backend must fail with a clear, actionable message naming its pip extra.

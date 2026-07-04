@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Pydantic input models for objectstore-mcp tool parameters (CONCEPT:OBJ-1.2).
+"""Pydantic input models for objectstore-mcp tool parameters (CONCEPT:OB-OS.governance.obj-2).
 
 Typed contracts for the ``params_json`` payloads accepted by the three
 action-routed MCP tools (``objects``, ``buckets``, ``transfer``).

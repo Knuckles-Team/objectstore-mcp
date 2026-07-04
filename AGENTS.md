@@ -6,7 +6,7 @@
 ## Project Structure
 - `objectstore_mcp/`: Main server code
   - `api/`: One client module per provider (`api_client_{filesystem,s3,gcs,azure_blob}.py`),
-    all implementing the `ObjectStoreBackend` protocol in `api/api_client_base.py` (CONCEPT:OBJ-1.0)
+    all implementing the `ObjectStoreBackend` protocol in `api/api_client_base.py` (CONCEPT:OB-OS.governance.every-provider-implements-same)
   - `mcp/mcp_objectstore.py`: The action-routed tool surface and the **only**
     place safety policy (caps, delete flags, dry-run) is enforced
   - `config.py` / `auth.py`: Named-store registry, backend cache, and `get_client()`
@@ -37,7 +37,7 @@
   translation tests with injected fake clients.
 - **Cloud SDK imports stay lazy** and failures must raise
   `MissingDependencyError` naming the pip extra.
-- New stable ideas get a `CONCEPT:OBJ-1.x` ID in `docs/concepts.md` and a
+- New stable ideas get a `CONCEPT:OB-OS.governance.obj-x` ID in `docs/concepts.md` and a
   marker in the owning docstring.
 
 ## ⛔ Keep the Repository Root Pristine — No Scratch / Temp / Debug Files
@@ -146,7 +146,7 @@ alone).
 Working in parallel with other sessions/worktrees? **Reserve a concept id before you write its `CONCEPT:` marker** so two sessions never collide:
 
 ```bash
-agent-utilities --json concept reserve --ns KG-2   # or a package prefix, e.g. KEY
+agent-utilities --json concept reserve --ns EG-KG.compute.backend   # or a package prefix, e.g. KEY
 ```
 
 Full protocol (ledger, merge=union, reconcile, MCP/REST): <https://knuckles-team.github.io/agent-utilities/concept_coordination/>

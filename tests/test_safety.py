@@ -1,4 +1,4 @@
-"""Safety-governor tests (CONCEPT:OBJ-1.3): caps, flags, dry-run, explicitness."""
+"""Safety-governor tests (CONCEPT:OB-OS.safety.size-caps-list-batch): caps, flags, dry-run, explicitness."""
 
 import json
 

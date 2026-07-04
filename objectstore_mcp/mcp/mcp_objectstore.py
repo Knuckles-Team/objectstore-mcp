@@ -1,9 +1,9 @@
-"""Action-routed MCP tools over the object-store backends (CONCEPT:OBJ-1.2).
+"""Action-routed MCP tools over the object-store backends (CONCEPT:OB-OS.governance.obj-2).
 
 Three consolidated tools — ``objects``, ``buckets``, ``transfer`` — each take
 an ``action`` plus a ``params_json`` payload and an optional ``store`` (a
 named store from ``OBJECTSTORE_STORES``). The tool layer owns every safety
-decision (CONCEPT:OBJ-1.3): size caps, list/batch caps, destructive-operation
+decision (CONCEPT:OB-OS.safety.size-caps-list-batch): size caps, list/batch caps, destructive-operation
 flags, dry-run batch deletes, and explicit-bucket requirements for deletes.
 Backends stay pure storage adapters.
 """

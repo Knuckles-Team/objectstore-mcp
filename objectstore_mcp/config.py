@@ -1,4 +1,4 @@
-"""Named-store registry and safety limits (CONCEPT:OBJ-1.1, CONCEPT:OBJ-1.3).
+"""Named-store registry and safety limits (CONCEPT:OB-OS.config.obj, CONCEPT:OB-OS.safety.size-caps-list-batch).
 
 Stores
 ------
@@ -69,7 +69,7 @@ class StoreConfig:
 
 @dataclass(frozen=True)
 class Limits:
-    """Safety caps enforced by the tool layer (CONCEPT:OBJ-1.3)."""
+    """Safety caps enforced by the tool layer (CONCEPT:OB-OS.safety.size-caps-list-batch)."""
 
     max_get_bytes: int = 10 * 1024 * 1024
     max_put_bytes: int = 10 * 1024 * 1024

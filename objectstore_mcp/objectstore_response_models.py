@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Pydantic response models for objectstore-mcp payloads (CONCEPT:OBJ-1.2).
+"""Pydantic response models for objectstore-mcp payloads (CONCEPT:OB-OS.governance.obj-2).
 
 Typed contracts mirroring the dataclass envelopes returned by the
 :mod:`objectstore_mcp.api` backends and surfaced through the MCP tools.

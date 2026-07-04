@@ -37,7 +37,7 @@ batch deletes are enforced uniformly in the tool layer, regardless of backend.
 ## What it provides
 
 - **A multi-backend store abstraction** (`objectstore_mcp.api`,
-  CONCEPT:OBJ-1.0) — every provider implements the same
+  CONCEPT:OB-OS.governance.every-provider-implements-same) — every provider implements the same
   `ObjectStoreBackend` protocol, validated by a single conformance test
   suite that runs for real against the filesystem backend.
 - **Three consolidated, action-routed MCP tools** (`objectstore-mcp`

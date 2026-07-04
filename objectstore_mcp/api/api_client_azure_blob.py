@@ -1,4 +1,4 @@
-"""Azure Blob Storage backend (CONCEPT:OBJ-1.5).
+"""Azure Blob Storage backend (CONCEPT:OB-OS.governance.obj-3).
 
 Containers map to buckets. Credentials come from
 ``AZURE_STORAGE_CONNECTION_STRING`` (or an explicit ``connection_string``

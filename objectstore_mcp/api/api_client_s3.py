@@ -1,4 +1,4 @@
-"""Amazon S3 / S3-compatible backend (CONCEPT:OBJ-1.5).
+"""Amazon S3 / S3-compatible backend (CONCEPT:OB-OS.governance.obj-3).
 
 Covers AWS S3 plus any S3-compatible endpoint (MinIO, Cloudflare R2, Ceph RGW)
 via the ``endpoint`` store option. Credentials resolve through boto3's own
