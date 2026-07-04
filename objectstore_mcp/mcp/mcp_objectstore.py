@@ -464,8 +464,79 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
             }
         raise ValueError(f"Unknown transfer action: {action!r}.")
 
+    @mcp.tool(tags={"objectstore", "kg"})
+    async def objectstore_ingest(
+        action: str = Field(
+            default="bucket",
+            description=(
+                "What to mirror into the epistemic-graph knowledge graph. One of: "
+                "'bucket' (list the objects under a prefix and ingest them as typed "
+                ":Object nodes under their :Bucket) or 'buckets' (list the store's "
+                "buckets and ingest them as :Bucket nodes under their :ObjectStore). "
+                "Object METADATA only — object bytes are never copied into the graph."
+            ),
+        ),
+        params_json: str = Field(
+            default="{}",
+            description=(
+                "JSON of arguments. bucket: "
+                '{"bucket": "b", "prefix": "logs/", "max_keys": 500}. '
+                "buckets: {} (lists all buckets in the store)."
+            ),
+        ),
+        store: str | None = Field(
+            default=None,
+            description="Named store from OBJECTSTORE_STORES (default store otherwise).",
+        ),
+    ) -> Any:
+        """Natively ingest object/bucket metadata into epistemic-graph (Wire-First).
+
+        Lists live records with the real backend, then pushes them as typed OWL nodes
+        (:ObjectStore/:Bucket/:Object) via :mod:`objectstore_mcp.kg_ingest`. Best-effort:
+        returns ``{"ingested": None}`` when no engine is reachable.
+        CONCEPT:AU-KG.ingest.enterprise-source-extractor.
+        """
+        from objectstore_mcp.kg_ingest import ingest_buckets, ingest_objects
+
+        backend, config = get_backend(store)
+        limits = load_limits()
+        p = _params(params_json)
+
+        if action == "buckets":
+            bucket_dicts = [b.to_dict() for b in backend.list_buckets()]
+            result = ingest_buckets(
+                bucket_dicts,
+                store=config.name,
+                backend=config.backend,
+                endpoint=config.endpoint,
+            )
+            return {
+                "store": config.name,
+                "listed": len(bucket_dicts),
+                "ingested": result,
+            }
+
+        if action == "bucket":
+            bucket = _bucket_for(p, config)
+            max_keys = min(
+                int(p.get("max_keys", limits.max_list_keys)), limits.max_list_keys
+            )
+            page = backend.list_objects(
+                bucket, prefix=p.get("prefix", ""), max_keys=max_keys
+            )
+            object_dicts = [o.to_dict() for o in page.objects]
+            result = ingest_objects(object_dicts, store=config.name, bucket=bucket)
+            return {
+                "store": config.name,
+                "bucket": bucket,
+                "listed": len(object_dicts),
+                "truncated": page.truncated,
+                "ingested": result,
+            }
+        raise ValueError(f"Unknown objectstore_ingest action: {action!r}.")
+
     # Re-exported so linters see the closures as used; FastMCP holds the refs.
-    _ = (objects, buckets, transfer)
+    _ = (objects, buckets, transfer, objectstore_ingest)
 
 
 __all__ = ["register_objectstore_tools", "ObjectStoreError"]

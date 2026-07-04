@@ -1,0 +1,119 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix : <http://knuckles.team/kg#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Object-storage ontology — named stores, buckets/containers, and the objects they
+# hold, across S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a local filesystem
+# backend. All classes and properties live in the shared `:` (kg#) namespace; only the
+# owl:Ontology node gets the per-package IRI. Backs the objectstore-mcp tool surface
+# (objects / buckets / transfer) and its native ingestion (objectstore_ingest_bucket).
+#
+# NOTE: object storage IS a blob backend. This model captures typed :Object *metadata*
+# (key, size, etag, content-type, storage-class) — it deliberately does NOT copy object
+# bytes into the KG. Where an object's raw bytes are separately ingested as a shared
+# :Blob, link it with :hasBlob rather than duplicating the payload.
+
+:ObjectStore a owl:Class ;
+    rdfs:label "Object Store" ;
+    rdfs:comment "A configured named store: one backend (s3/gcs/azure/filesystem) plus its endpoint/region/root (buckets action=stores)." .
+
+:Bucket a owl:Class ;
+    rdfs:label "Bucket" ;
+    rdfs:comment "A bucket or container that holds objects within an ObjectStore (buckets action=list/info)." .
+
+:Object a owl:Class ;
+    rdfs:label "Object" ;
+    rdfs:comment "A stored object described by its key + metadata (objects action=list/head). Metadata only — the raw bytes are NOT copied into the graph." .
+
+# --- links (owl:ObjectProperty) ---
+
+:inStore a owl:ObjectProperty ;
+    rdfs:label "in store" ;
+    rdfs:comment "Links a Bucket to the ObjectStore that hosts it." ;
+    rdfs:domain :Bucket ;
+    rdfs:range :ObjectStore .
+
+:inBucket a owl:ObjectProperty ;
+    rdfs:label "in bucket" ;
+    rdfs:comment "Links an Object to the Bucket that contains it." ;
+    rdfs:domain :Object ;
+    rdfs:range :Bucket .
+
+:hasBlob a owl:ObjectProperty ;
+    rdfs:label "has blob" ;
+    rdfs:comment "Links an Object to the shared :Blob holding its raw bytes, when those bytes were separately content-addressed into the graph (avoids double-storing the payload)." ;
+    rdfs:domain :Object ;
+    rdfs:range :Blob .
+
+:ownedBy a owl:ObjectProperty ;
+    rdfs:label "owned by" ;
+    rdfs:comment "Links a Bucket or Object to the Person/Agent responsible for it." ;
+    rdfs:range :Person .
+
+# --- fields (owl:DatatypeProperty) ---
+
+:backendType a owl:DatatypeProperty ;
+    rdfs:label "backend type" ;
+    rdfs:comment "Storage backend of an ObjectStore (s3, gcs, azure, filesystem)." ;
+    rdfs:domain :ObjectStore ;
+    rdfs:range xsd:string .
+
+:endpoint a owl:DatatypeProperty ;
+    rdfs:label "endpoint" ;
+    rdfs:comment "Service endpoint URL of an ObjectStore (e.g. a MinIO/R2 endpoint)." ;
+    rdfs:domain :ObjectStore ;
+    rdfs:range xsd:string .
+
+:location a owl:DatatypeProperty ;
+    rdfs:label "location" ;
+    rdfs:comment "Region/location of a Bucket or ObjectStore (e.g. us-east-1)." ;
+    rdfs:range xsd:string .
+
+:objectKey a owl:DatatypeProperty ;
+    rdfs:label "object key" ;
+    rdfs:comment "The full key/path of an Object within its bucket." ;
+    rdfs:domain :Object ;
+    rdfs:range xsd:string .
+
+:byteSize a owl:DatatypeProperty ;
+    rdfs:label "byte size" ;
+    rdfs:comment "Size of an Object's payload in bytes." ;
+    rdfs:domain :Object ;
+    rdfs:range xsd:integer .
+
+:etag a owl:DatatypeProperty ;
+    rdfs:label "etag" ;
+    rdfs:comment "Entity tag / content hash of an Object as reported by the backend." ;
+    rdfs:domain :Object ;
+    rdfs:range xsd:string .
+
+:contentType a owl:DatatypeProperty ;
+    rdfs:label "content type" ;
+    rdfs:comment "MIME type of an Object's payload." ;
+    rdfs:domain :Object ;
+    rdfs:range xsd:string .
+
+:storageClass a owl:DatatypeProperty ;
+    rdfs:label "storage class" ;
+    rdfs:comment "Provider storage tier of an Object (e.g. STANDARD, GLACIER, COOL)." ;
+    rdfs:domain :Object ;
+    rdfs:range xsd:string .
+
+:lastModified a owl:DatatypeProperty ;
+    rdfs:label "last modified" ;
+    rdfs:comment "Last-modified timestamp of an Object (ISO-8601, where available)." ;
+    rdfs:domain :Object ;
+    rdfs:range xsd:string .
+
+<http://knuckles.team/kg/objectstore> a owl:Ontology ;
+    rdfs:label "Object Storage Ontology" ;
+    rdfs:comment """Object-storage model — named stores, buckets/containers, and the
+    objects they hold with their size/etag/content-type/storage-class metadata — across
+    S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a local filesystem backend,
+    federated into the agent-utilities knowledge-graph hub. Captures object METADATA
+    only; object bytes stay in the backing store (or a separately-linked :Blob).""" ;
+    owl:imports <http://knuckles.team/kg> .

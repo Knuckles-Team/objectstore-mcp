@@ -1,0 +1,15 @@
+{
+  "_comment": "Tier-1 mcp_tool source preset(s) for objectstore-mcp (AU-KG.ingest.mcp-tool-connector). The action-routed 'objects' tool lists objects under a bucket/prefix; each record is an object metadata envelope (key/size/etag/content_type/last_modified). Contributed presets win over the central MCP_TOOL_PRESETS. For richer typed :Bucket/:Object ingestion prefer the native 'objectstore_ingest' tool + objectstore_mcp.kg_ingest.",
+  "objectstore-objects": {
+    "server": "objectstore-mcp",
+    "tool": "objects",
+    "action": "list",
+    "params": { "action": "list" },
+    "records_path": "objects",
+    "id_field": "key",
+    "title_field": "key",
+    "text_field": "content_type",
+    "updated_field": "last_modified",
+    "doc_type": "objectstore_object"
+  }
+}

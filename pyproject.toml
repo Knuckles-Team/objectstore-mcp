@@ -33,6 +33,12 @@ objectstore-agent = "objectstore_mcp.agent_server:agent_server"
 [project.entry-points."agent_utilities.skill_providers"]
 objectstore-mcp = "objectstore_mcp.skills"
 
+[project.entry-points."agent_utilities.ontology_providers"]
+objectstore-mcp = "objectstore_mcp.ontology"
+
+[project.entry-points."agent_utilities.source_connector_providers"]
+objectstore-mcp = "objectstore_mcp.connectors"
+
 [project.entry-points."agent_utilities.prompt_providers"]
 objectstore-mcp = "objectstore_mcp.prompts"
 
@@ -52,7 +58,7 @@ check_untyped_defs = true
 dev = [ "pytest-timeout>=2.4.0",]
 
 [tool.setuptools.package-data]
-objectstore_mcp = [ "mcp_config.json", "agent_data/**", "prompts/**", "skills/**",]
+objectstore_mcp = [ "mcp_config.json", "agent_data/**", "prompts/**", "skills/**", "ontology/**", "connectors/**",]
 
 [tool.ruff.lint]
 select = [ "E", "F", "I", "UP", "B",]
