@@ -833,22 +833,22 @@
 <tr>
 <td>Tool surface</td>
 <td><code>objectstore_mcp/mcp/mcp_objectstore.py</code></td>
-<td>Action routing, parameter parsing, text/base64 encoding, <strong>all safety enforcement</strong> (CONCEPT:OBJ-1.2/1.3)</td>
+<td>Action routing, parameter parsing, text/base64 encoding, <strong>all safety enforcement</strong> (CONCEPT:OB-OS.governance.obj-2/1.3)</td>
 </tr>
 <tr>
 <td>Store registry</td>
 <td><code>objectstore_mcp/config.py</code>, <code>objectstore_mcp/auth.py</code></td>
-<td><code>OBJECTSTORE_STORES</code> parsing, default-store resolution, per-store backend cache (CONCEPT:OBJ-1.1)</td>
+<td><code>OBJECTSTORE_STORES</code> parsing, default-store resolution, per-store backend cache (CONCEPT:OB-OS.config.obj)</td>
 </tr>
 <tr>
 <td>Backend protocol</td>
 <td><code>objectstore_mcp/api/api_client_base.py</code></td>
-<td>The provider-neutral contract, dataclasses, error taxonomy, name/key validation (CONCEPT:OBJ-1.0)</td>
+<td>The provider-neutral contract, dataclasses, error taxonomy, name/key validation (CONCEPT:OB-OS.governance.every-provider-implements-same)</td>
 </tr>
 <tr>
 <td>Backends</td>
 <td><code>objectstore_mcp/api/api_client_{filesystem,s3,gcs,azure_blob}.py</code></td>
-<td>Pure storage adapters; lazy SDK imports (CONCEPT:OBJ-1.4/1.5)</td>
+<td>Pure storage adapters; lazy SDK imports (CONCEPT:OB-OS.governance.zero-infra-default/1.5)</td>
 </tr>
 </tbody>
 </table>

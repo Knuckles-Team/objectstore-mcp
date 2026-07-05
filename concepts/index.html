@@ -704,7 +704,7 @@
 <p>This connector inherits the ecosystem bridge concept <code>ECO-4.0</code>
 (connector parity standard) from
 <a href="https://github.com/Knuckles-Team/agent-utilities/blob/main/docs/overview.md"><code>agent-utilities</code></a>,
-alongside <code>ECO-4.1</code> (MCP &amp; Universal Skills) and <code>ECO-4.2</code> (A2A Network).</p>
+alongside <code>ECO-4.1</code> (MCP &amp; Universal Skills) and <code>AU-ECO.toolkit.journey-map-narrative</code> (A2A Network).</p>
 <p>Stable concept IDs trace the connector's core ideas across documentation,
 code docstrings, and tests.</p>
 <table>
@@ -717,32 +717,32 @@ code docstrings, and tests.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>CONCEPT:OBJ-1.0</code></td>
+<td><code>CONCEPT:OB-OS.governance.every-provider-implements-same</code></td>
 <td>Multi-Backend Store Abstraction</td>
 <td>The <code>ObjectStoreBackend</code> protocol in <code>api/api_client_base.py</code>: one bucket-agnostic contract every provider implements, validated by a single conformance suite (<code>tests/test_backend_conformance.py</code>)</td>
 </tr>
 <tr>
-<td><code>CONCEPT:OBJ-1.1</code></td>
+<td><code>CONCEPT:OB-OS.config.obj</code></td>
 <td>Named-Store Registry</td>
 <td><code>OBJECTSTORE_STORES</code> JSON maps store names to backend + connection settings; <code>auth.get_backend()</code> resolves and caches them; the zero-infra <code>local</code> store always exists</td>
 </tr>
 <tr>
-<td><code>CONCEPT:OBJ-1.2</code></td>
+<td><code>CONCEPT:OB-OS.governance.obj-2</code></td>
 <td>Action-Routed Tool Surface</td>
 <td>Three consolidated MCP tools (<code>objects</code>, <code>buckets</code>, <code>transfer</code>) that route an <code>action</code> + <code>params_json</code> + optional <code>store</code> to the backend</td>
 </tr>
 <tr>
-<td><code>CONCEPT:OBJ-1.3</code></td>
+<td><code>CONCEPT:OB-OS.safety.size-caps-list-batch</code></td>
 <td>Safety Governor</td>
 <td>Tool-layer enforcement of size caps, list/batch key caps, explicit-bucket+key deletes (no wildcards), dry-run-by-default batch deletes, and opt-in empty-only bucket deletes</td>
 </tr>
 <tr>
-<td><code>CONCEPT:OBJ-1.4</code></td>
+<td><code>CONCEPT:OB-OS.governance.zero-infra-default</code></td>
 <td>Zero-Infra Filesystem Backend</td>
 <td><code>FilesystemBackend</code>: buckets as directories, metadata sidecars under <code>.meta/</code>, full protocol coverage with no cloud dependencies</td>
 </tr>
 <tr>
-<td><code>CONCEPT:OBJ-1.5</code></td>
+<td><code>CONCEPT:OB-OS.governance.obj-3</code></td>
 <td>Optional-Dependency Cloud Backends</td>
 <td>S3/GCS/Azure adapters import their SDKs lazily; a missing SDK raises <code>MissingDependencyError</code> naming the pip extra (<code>s3</code>, <code>gcs</code>, <code>azure</code>)</td>
 </tr>
