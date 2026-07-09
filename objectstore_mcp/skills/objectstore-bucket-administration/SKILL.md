@@ -1,5 +1,6 @@
 ---
 name: objectstore-bucket-administration
+skill_type: skill
 description: >-
   Bucket/container administration and store inspection over the objectstore-mcp MCP
   server — list, create, check existence, inspect, and (gated) delete buckets, and

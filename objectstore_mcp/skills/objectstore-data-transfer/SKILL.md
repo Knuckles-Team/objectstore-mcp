@@ -1,5 +1,6 @@
 ---
 name: objectstore-data-transfer
+skill_type: skill
 description: >-
   Bulk data transfer between the local filesystem and object storage via the
   objectstore-mcp MCP server — upload/download single files and whole

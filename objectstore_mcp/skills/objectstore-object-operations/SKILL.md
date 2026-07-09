@@ -1,5 +1,6 @@
 ---
 name: objectstore-object-operations
+skill_type: skill
 description: >-
   Object-level operations on S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a
   local filesystem store via the objectstore-mcp MCP server — list, head, get, put,
