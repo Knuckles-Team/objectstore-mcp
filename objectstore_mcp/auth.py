@@ -24,14 +24,51 @@ from objectstore_mcp.config import StoreConfig, default_store_name, load_stores
 _BACKEND_CACHE: dict[str, ObjectStoreBackend] = {}
 
 
+def entitled_store_names(names: list[str]) -> list[str]:
+    """Filter a store-name list to what the calling identity may reach.
+
+    Routes the names through agent-utilities' shared identity-scoped resolver
+    (CONCEPT:AU-OS.identity.identity-scoped-resource-autoload): a caller's
+    Okta/Keycloak groups decide which named object stores auto-load for them.
+    The ambient ``SYSTEM_ACTOR`` (unauthenticated/local) holds ``admin`` → sees
+    all, so behaviour is unchanged until a real identity scopes it down.
+    Degrades to the full list if agent-utilities predates the resolver.
+    """
+    try:
+        from agent_utilities.security.entitlements import identity_scoped_resources
+    except Exception:
+        return list(names)
+    return list(identity_scoped_resources("objectstore", names))
+
+
 def resolve_store(store: str | None = None) -> StoreConfig:
-    """Resolve a tool call's ``store`` argument to a :class:`StoreConfig`."""
+    """Resolve a tool call's ``store`` argument to a :class:`StoreConfig`.
+
+    Resolved against the caller's identity entitlements: an omitted ``store``
+    auto-selects the caller's entitled default, and a named store they are not
+    entitled to is denied.
+    """
     stores = load_stores()
-    name = store or default_store_name(stores)
-    config = stores.get(name)
+    entitled = entitled_store_names(list(stores))
+    if not store:
+        default = default_store_name(stores)
+        if default in entitled:
+            return stores[default]
+        if entitled:
+            return stores[entitled[0]]
+        raise ObjectStoreError(
+            "No object stores are available to your identity. Your "
+            "Okta/Keycloak groups grant none of the configured stores."
+        )
+    config = stores.get(store)
     if config is None:
         raise ObjectStoreError(
-            f"Unknown store {name!r}. Configured stores: {sorted(stores)}."
+            f"Unknown store {store!r}. Configured stores: {sorted(stores)}."
+        )
+    if store not in entitled:
+        raise PermissionError(
+            f"Your identity is not entitled to the object store {store!r}. "
+            f"Entitled: {', '.join(entitled) or '(none)'}"
         )
     return config
 

@@ -18,7 +18,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from objectstore_mcp.api.api_client_base import ObjectStoreError
-from objectstore_mcp.auth import get_backend
+from objectstore_mcp.auth import entitled_store_names, get_backend
 from objectstore_mcp.config import Limits, StoreConfig, load_limits, load_stores
 
 _FORBIDDEN_KEY_CHARS = ("*", "?")
@@ -285,6 +285,7 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
         """Manage buckets/containers and inspect configured stores."""
         if action == "stores":
             stores = load_stores()
+            entitled = set(entitled_store_names(list(stores)))
             return {
                 name: {
                     "backend": cfg.backend,
@@ -292,6 +293,7 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
                     "endpoint": cfg.endpoint,
                 }
                 for name, cfg in sorted(stores.items())
+                if name in entitled
             }
         backend, config = get_backend(store)
         limits = load_limits()
