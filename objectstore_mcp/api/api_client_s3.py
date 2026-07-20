@@ -75,7 +75,7 @@ class S3Backend:
             return AlreadyExistsError(f"{context} already exists.")
         if code == "BucketNotEmpty":
             return BucketNotEmptyError(f"{context} is not empty.")
-        return ObjectStoreError(f"{context}: {exc}")
+        return ObjectStoreError(f"{context}: {type(exc).__name__}")
 
     # -- buckets -------------------------------------------------------------
     def list_buckets(self) -> list[BucketInfo]:

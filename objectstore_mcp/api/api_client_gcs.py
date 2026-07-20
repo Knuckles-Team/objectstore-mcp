@@ -66,7 +66,7 @@ class GCSBackend:
             return NotFoundError(f"{context} not found.")
         if _is_conflict(exc):
             return AlreadyExistsError(f"{context} already exists.")
-        return ObjectStoreError(f"{context}: {exc}")
+        return ObjectStoreError(f"{context}: {type(exc).__name__}")
 
     # -- buckets -------------------------------------------------------------
     def list_buckets(self) -> list[BucketInfo]:
@@ -263,6 +263,6 @@ class GCSBackend:
             )
         except Exception as exc:
             raise ObjectStoreError(
-                f"Presign {bucket!r}/{key!r} failed (signing requires a "
-                f"service-account key): {exc}"
-            ) from exc
+                "Presign failed; signing requires a configured service-account key "
+                f"({type(exc).__name__})."
+            ) from None

@@ -60,5 +60,5 @@ def get_client(store: str | None = None) -> ObjectStoreBackend:
     try:
         backend, _config = get_backend(store)
     except Exception as exc:
-        raise RuntimeError(f"AUTHENTICATION ERROR: {exc}") from exc
+        raise RuntimeError(f"AUTHENTICATION ERROR: {type(exc).__name__}") from exc
     return backend

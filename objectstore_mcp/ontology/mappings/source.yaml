@@ -1,0 +1,20 @@
+schema_version: '1'
+connector: objectstore-mcp
+ontology_source: objectstore
+sync:
+- preset: objectstore-objects
+  server: objectstore-mcp
+  tool: objects
+  action: list
+  records_path: objects
+  id_field: key
+  title_field: key
+  text_field: content_type
+  updated_field: last_modified
+  doc_type: objectstore_object
+  tool_schema_sha256: aaddc19a0d95c42630e13878e7ee35410890d60ba795278242162c340516fe18
+governance:
+  default_acl: quarantine
+  identity: opaque-reference
+  tenant: required-at-materialization
+  provenance: required-at-materialization

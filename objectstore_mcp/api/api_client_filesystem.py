@@ -22,6 +22,7 @@ from objectstore_mcp.api.api_client_base import (
     AlreadyExistsError,
     BucketInfo,
     BucketNotEmptyError,
+    InvalidNameError,
     Metadata,
     NotFoundError,
     ObjectInfo,
@@ -54,14 +55,50 @@ class FilesystemBackend:
         }
 
     # -- path helpers ------------------------------------------------------
+    def _reject_symlink_components(self, path: Path) -> Path:
+        """Return ``path`` only when every existing component is non-symlink.
+
+        Object keys are already lexically constrained by :func:`validate_key`,
+        but an existing symlink below the store root could otherwise redirect a
+        valid-looking key outside that root.  Refusing symlinks also protects
+        the private metadata tree and keeps reads and writes on the same trust
+        boundary.
+
+        This is deliberately fail-closed.  A filesystem-backed object store is
+        a storage namespace, not a general-purpose symlink traversal API.
+        """
+        try:
+            relative = path.relative_to(self.root)
+        except ValueError as exc:  # defensive: callers must stay below root
+            raise InvalidNameError("Filesystem object path escapes the store root.") from exc
+
+        current = self.root
+        for part in relative.parts:
+            current = current / part
+            if current.is_symlink():
+                raise InvalidNameError(
+                    "Filesystem object paths must not contain symbolic links."
+                )
+        return path
+
     def _bucket_path(self, bucket: str) -> Path:
-        return self.root / validate_bucket_name(bucket)
+        return self._reject_symlink_components(
+            self.root / validate_bucket_name(bucket)
+        )
 
     def _object_path(self, bucket: str, key: str) -> Path:
-        return self._bucket_path(bucket) / validate_key(key)
+        return self._reject_symlink_components(
+            self._bucket_path(bucket) / validate_key(key)
+        )
 
     def _meta_path(self, bucket: str, key: str) -> Path:
-        return self.root / _META_DIR / bucket / f"{key}.json"
+        # Validate independently: metadata helpers are also called from paths
+        # which already resolved the payload, and must never become a bypass.
+        bucket = validate_bucket_name(bucket)
+        key = validate_key(key)
+        return self._reject_symlink_components(
+            self.root / _META_DIR / bucket / f"{key}.json"
+        )
 
     def _require_bucket(self, bucket: str) -> Path:
         path = self._bucket_path(bucket)
@@ -99,7 +136,11 @@ class FilesystemBackend:
     def _object_info(self, bucket: str, key: str, path: Path) -> ObjectInfo:
         stat = path.stat()
         sidecar = self._read_sidecar(bucket, key)
-        digest = hashlib.md5(path.read_bytes(), usedforsecurity=False).hexdigest()
+        digest_state = hashlib.sha256()
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest_state.update(chunk)
+        digest = digest_state.hexdigest()
         content_type = sidecar.get("content_type") or mimetypes.guess_type(key)[0]
         return ObjectInfo(
             key=key,
@@ -116,7 +157,11 @@ class FilesystemBackend:
     def list_buckets(self) -> list[BucketInfo]:
         buckets = []
         for entry in sorted(self.root.iterdir()):
-            if entry.is_dir() and not entry.name.startswith("."):
+            if (
+                entry.is_dir()
+                and not entry.is_symlink()
+                and not entry.name.startswith(".")
+            ):
                 buckets.append(self._bucket_info(entry))
         return buckets
 
@@ -125,7 +170,9 @@ class FilesystemBackend:
         return BucketInfo(
             name=path.name,
             created=datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
-            location=str(path),
+            # The backing path is deployment-private and must not escape via an
+            # MCP response, trace, or downstream knowledge-graph record.
+            location=None,
         )
 
     def create_bucket(self, bucket: str, location: str | None = None) -> BucketInfo:
@@ -155,7 +202,7 @@ class FilesystemBackend:
         bucket_path = self._require_bucket(bucket)
         keys = []
         for path in bucket_path.rglob("*"):
-            if path.is_file():
+            if path.is_file() and not path.is_symlink():
                 keys.append(path.relative_to(bucket_path).as_posix())
         return sorted(keys)
 

@@ -79,7 +79,7 @@ class AzureBlobBackend:
             return NotFoundError(f"{context} not found.")
         if _is_conflict(exc):
             return AlreadyExistsError(f"{context} already exists.")
-        return ObjectStoreError(f"{context}: {exc}")
+        return ObjectStoreError(f"{context}: {type(exc).__name__}")
 
     # -- buckets -------------------------------------------------------------
     def list_buckets(self) -> list[BucketInfo]:

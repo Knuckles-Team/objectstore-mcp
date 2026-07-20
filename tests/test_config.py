@@ -31,7 +31,7 @@ def test_stores_json_parsed(monkeypatch):
                 "media": {"backend": "s3", "bucket": "media-prod", "profile": "prod"},
                 "minio": {
                     "backend": "s3",
-                    "endpoint": "http://minio.arpa:9000",
+                    "endpoint": "http://minio.example:9000",
                     "custom_flag": True,
                 },
             }
@@ -40,7 +40,7 @@ def test_stores_json_parsed(monkeypatch):
     stores = load_stores()
     assert stores["media"].bucket == "media-prod"
     assert stores["media"].profile == "prod"
-    assert stores["minio"].endpoint == "http://minio.arpa:9000"
+    assert stores["minio"].endpoint == "http://minio.example:9000"
     assert stores["minio"].options == {"custom_flag": True}
     assert LOCAL_STORE_NAME in stores
 

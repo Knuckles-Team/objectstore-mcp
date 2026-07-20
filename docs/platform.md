@@ -17,7 +17,7 @@ recipes below run local, API-compatible stand-ins that serve as targets of
 # platform.compose.yml — pick the providers you need
 services:
   minio:                       # S3-compatible
-    image: minio/minio:latest
+    image: minio/minio@sha256:<digest>
     restart: unless-stopped
     command: server /data --console-address ":9090"
     environment:
@@ -30,14 +30,14 @@ services:
       - minio-data:/data
 
   azurite:                     # Azure Blob emulator
-    image: mcr.microsoft.com/azure-storage/azurite:latest
+    image: mcr.microsoft.com/azure-storage/azurite@sha256:<digest>
     restart: unless-stopped
     command: azurite-blob --blobHost 0.0.0.0
     ports:
       - "10000:10000"
 
   fake-gcs:                    # Google Cloud Storage emulator
-    image: fsouza/fake-gcs-server:latest
+    image: fsouza/fake-gcs-server@sha256:<digest>
     restart: unless-stopped
     command: -scheme http
     ports:

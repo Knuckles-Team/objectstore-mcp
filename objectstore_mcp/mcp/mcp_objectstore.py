@@ -69,7 +69,7 @@ def _decode_payload(p: dict[str, Any], limits: Limits) -> bytes:
         try:
             data = base64.b64decode(p["content_base64"], validate=True)
         except (binascii.Error, ValueError) as exc:
-            raise ValueError(f"content_base64 is not valid base64: {exc}") from exc
+            raise ValueError(f"content_base64 is not valid base64: {type(exc).__name__}") from exc
     else:
         raise ValueError("put requires 'text' or 'content_base64' in params_json.")
     if len(data) > limits.max_put_bytes:
@@ -403,7 +403,7 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
             bucket = _bucket_for(p, config)
             local_dir = Path(p["local_dir"]).expanduser()
             if not local_dir.is_dir():
-                raise ValueError(f"local_dir {str(local_dir)!r} is not a directory.")
+                raise ValueError("Configured local path is not a directory.")
             prefix = p.get("prefix", "")
             max_keys = min(
                 int(p.get("max_keys", limits.max_batch_keys)), limits.max_batch_keys

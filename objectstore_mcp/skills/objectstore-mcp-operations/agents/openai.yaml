@@ -1,0 +1,4 @@
+interface:
+  display_name: "Objectstore MCP Operations"
+  short_description: "Help with Objectstore MCP Operations tasks"
+  default_prompt: "Use $objectstore-mcp-operations to complete a governed provider workflow."

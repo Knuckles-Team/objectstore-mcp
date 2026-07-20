@@ -119,13 +119,13 @@ Pick the extra that matches what you want to run (provider extras are additive):
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `objectstore-mcp[mcp]` | Slim MCP server only (`agent-utilities[mcp]` — FastMCP/FastAPI) | You only run the **MCP server** (smallest install / image) |
-| `objectstore-mcp[agent]` | Full agent runtime (`agent-utilities[agent,logfire]` — Pydantic AI + the epistemic-graph engine) | You run the **integrated A2A agent** |
+| `objectstore-mcp[mcp]` | Connector-focused MCP server (`agent-utilities[mcp]` — FastMCP/FastAPI + `epistemic-graph[full]`) | You only run the **MCP server** (smallest install / image) |
+| `objectstore-mcp[agent]` | Agent runtime (`agent-utilities[agent-runtime,logfire]` — model orchestration + `epistemic-graph[full]`) | You run the **integrated A2A agent** |
 | `objectstore-mcp[all]` | Everything (`mcp` + `agent` + `s3` + `gcs` + `azure` + `logfire`) | Development / both surfaces |
 
 ```bash
 pip install objectstore-mcp            # core: local filesystem backend only
-pip install objectstore-mcp[mcp]       # slim MCP server (FastMCP/FastAPI)
+pip install objectstore-mcp[mcp]       # connector-focused MCP server (FastMCP/FastAPI)
 pip install objectstore-mcp[agent]     # full A2A agent runtime + epistemic-graph engine
 pip install objectstore-mcp[mcp,s3]    # + boto3 (S3, MinIO, R2)
 pip install objectstore-mcp[mcp,gcs]   # + google-cloud-storage
@@ -139,36 +139,37 @@ One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
-| `knucklessg1/objectstore-mcp:mcp` | `--target mcp` | `objectstore-mcp[mcp]` — **slim**, no engine/`pydantic-ai`/`dspy`/`llama-index`/`tree-sitter` | `objectstore-mcp` |
-| `knucklessg1/objectstore-mcp:latest` | `--target agent` (default) | `objectstore-mcp[agent]` — **full** agent runtime + epistemic-graph engine | `objectstore-agent` |
+| `example/objectstore-mcp:mcp` | `--target mcp` | `objectstore-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `objectstore-mcp` |
+| `example/objectstore-mcp@sha256:<digest>` | `--target agent` (default) | `objectstore-mcp[agent]` — **agent runtime**, model orchestration + `epistemic-graph[full]` | `objectstore-agent` |
 
 ```bash
-docker build --target mcp   -t knucklessg1/objectstore-mcp:mcp    docker/   # slim MCP server
-docker build --target agent -t knucklessg1/objectstore-mcp:latest docker/   # full agent
+docker build --target mcp   -t example/objectstore-mcp:mcp    docker/   # connector-focused MCP server
+docker build --target agent -t example/objectstore-mcp:agent-local docker/   # agent runtime
 ```
 
 Or pull a prebuilt image:
 
 ```bash
-docker pull knucklessg1/objectstore-mcp:mcp      # slim MCP server
-docker pull knucklessg1/objectstore-mcp:latest   # full agent (default)
+docker pull example/objectstore-mcp:mcp      # connector-focused MCP server
+docker pull example/objectstore-mcp@sha256:<digest>   # agent runtime (default)
 ```
 
-> The `:mcp` tag is the **slim MCP-server image** (built from
+> The `:mcp` tag is the **MCP-serving image** (built from
 > `docker/Dockerfile --target mcp`, installing `objectstore-mcp[mcp]`). The default
-> `:latest` tag is the **full agent image** (`--target agent`, `objectstore-mcp[agent]`)
+> the immutable agent image is the **full agent image** (`--target agent`, `objectstore-mcp[agent]`)
 > which also bundles the Pydantic AI agent and the epistemic-graph engine — use it
 > when you run `objectstore-agent` (the agent), not just the MCP server.
 
 ### Knowledge-graph database (`epistemic-graph`)
 
-The **full agent** (`[agent]` / `:latest`) embeds the **epistemic-graph** engine (pulled in
-transitively via `agent-utilities[agent]`). For production — or to share one knowledge graph
-across multiple agents — run **epistemic-graph as its own database container** and point the
-agent at it instead of embedding it. Deployment recipes (single-node + Raft HA), connection
-config, and the full database architecture (with diagrams) are documented in the
+Both `[mcp]` and `[agent]` carry the **epistemic-graph** engine through the required
+Agent Utilities core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
+the server connector-focused; `[agent]` additionally enables model orchestration. Local
+deployments can use the bundled engine. For production or shared state, run
+**epistemic-graph as a dedicated database service** and configure the runtime to use it.
+Deployment recipes (single-node + Raft HA), connection configuration, and architecture
+diagrams are documented in the
 [epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
-The slim `[mcp]` server does **not** require the database.
 
 ## Configuration (environment)
 
@@ -203,7 +204,7 @@ Application Default Credentials for GCS, and
 ```json
 {
   "media":   {"backend": "s3", "bucket": "media-prod", "profile": "prod", "region": "us-east-1"},
-  "minio":   {"backend": "s3", "endpoint": "http://minio.arpa:9000"},
+  "minio":   {"backend": "s3", "endpoint": "http://minio.example.invalid:9000"},
   "r2":      {"backend": "s3", "endpoint": "https://<account>.r2.cloudflarestorage.com"},
   "reports": {"backend": "gcs", "bucket": "acme-reports"},
   "archive": {"backend": "azure", "bucket": "archive"},
@@ -233,14 +234,11 @@ Example tool calls (any MCP client):
 
 ## MCP config
 
-> **Install the slim `[mcp]` extra.** The example below installs
-> `objectstore-mcp[mcp]` — the MCP-server extra that pulls only the FastMCP /
-> FastAPI tooling (`agent-utilities[mcp]`). It deliberately **excludes** the heavy
-> agent runtime (the epistemic-graph engine, `pydantic-ai`, `dspy`, `llama-index`,
-> `tree-sitter`), so `uvx`/container installs are dramatically smaller and faster.
-> Add the provider extras you need (`[mcp,s3]`, `[mcp,gcs]`, `[mcp,azure]`); use the
-> full `[agent]` extra only when you need the integrated Pydantic AI agent
-> (see [Installation](#installation)).
+> **Install the connector-focused `[mcp]` extra.** Examples use `objectstore-mcp[mcp]` to add
+> FastMCP / FastAPI through `agent-utilities[mcp]`; the required Agent Utilities core
+> still carries `epistemic-graph[full]`. The `[agent]` extra additionally
+> enables model orchestration.
+> Combine it with the storage-provider extras needed by the deployment.
 
 ```json
 {
@@ -249,7 +247,7 @@ Example tool calls (any MCP client):
       "command": "uvx",
       "args": ["--from", "objectstore-mcp[mcp]", "objectstore-mcp"],
       "env": {
-        "OBJECTSTORE_STORES": "{\"minio\": {\"backend\": \"s3\", \"endpoint\": \"http://minio.arpa:9000\"}}",
+        "OBJECTSTORE_STORES": "{\"minio\": {\"backend\": \"s3\", \"endpoint\": \"http://minio.example.invalid:9000\"}}",
         "OBJECTSTORE_DEFAULT_STORE": "local"
       }
     }
@@ -266,16 +264,16 @@ objectstore-agent --mcp-url http://localhost:8000/mcp --host 0.0.0.0 --port 9001
 <!-- BEGIN GENERATED: additional-deployment-options -->
 ### Additional Deployment Options
 
-`objectstore-mcp` can also run as a **local container** (Docker / Podman / `uv`) or be
-consumed from a **remote deployment**. The
-[Deployment guide](https://knuckles-team.github.io/objectstore-mcp/deployment/) has full, copy-paste
-`mcp_config.json` for all four transports — **stdio**, **streamable-http**,
-**local container / uv**, and **remote URL**:
+`objectstore-mcp` can run as a local stdio process or container, or behind a remote
+network boundary. The
+[Deployment guide](https://knuckles-team.github.io/objectstore-mcp/deployment/) carries
+the detailed transport contract.
 
-- **Local container / uv** — launch the server from `mcp_config.json` via `uvx`,
-  `docker run`, or `podman run`, or point at a local streamable-http container by `url`.
-- **Remote URL** — connect to a server deployed behind Caddy at
-  `http://objectstore-mcp.arpa/mcp` using the `"url"` key.
+- **Local container** — launch a reviewed immutable image as a least-privilege
+  stdio child with no listener or published port.
+- **Remote URL** — connect through an operator-supplied authenticated HTTPS
+  ingress. Keep its URL, outbound identity references, trust profile, and exact
+  `MCP_ALLOWED_HOSTS` in `AgentConfig`.
 <!-- END GENERATED: additional-deployment-options -->
 
 ## Docker deployment
@@ -305,26 +303,27 @@ See [`docs/`](docs/) for architecture, concepts, and deployment details.
 MIT — see [LICENSE](LICENSE).
 
 
-<!-- BEGIN agent-os-genesis-deploy (generated; do not edit between markers) -->
+<!-- BEGIN agent-utilities-deployment (generated; do not edit between markers) -->
 
-## Deploy with `agent-os-genesis`
+## Deploy with `agent-utilities-deployment`
 
-This package can be provisioned for you — skill-guided — by the **`agent-os-genesis`**
-universal skill (its *single-package deploy mode*): it picks your install method, seeds
-secrets to OpenBao/Vault (or `.env`), trusts your enterprise CA, registers the MCP
-server, and verifies it — the same machinery that stands up the whole Agent OS, narrowed
-to just this package. Ask your agent to **"deploy `objectstore-mcp` with agent-os-genesis"**.
+Provision this package with the consolidated **`agent-utilities-deployment`**
+workflow. It selects an installed-package, editable-source, or immutable-container
+path; records only runtime secret and TLS-profile references in `AgentConfig`; and
+runs doctor, registration, policy, observability, and rollback gates. Ask your agent
+to **"deploy `objectstore-mcp` with agent-utilities-deployment"**.
 
 | Install mode | Command |
 |------|---------|
-| Bare-metal, prod (PyPI) | `uvx objectstore-mcp` · or `uv tool install objectstore-mcp` |
-| Bare-metal, dev (editable) | `uv pip install -e ".[all]"` · or `pip install -e ".[all]"` |
-| Container, prod | deploy `knucklessg1/objectstore-mcp:latest` via docker-compose / swarm / podman / podman-compose / kubernetes |
-| Container, dev (editable) | deploy `docker/compose.dev.yml` (source-mounted at `/src`; edits live on restart) |
+| Installed package | `uv tool install "objectstore-mcp[mcp]"`, then run `objectstore-mcp` |
+| Editable source | `uv pip install -e ".[agent]"`, then run `objectstore-mcp` |
+| Immutable container | deploy `registry.example.invalid/objectstore-mcp@sha256:<digest>` through the operator-selected orchestrator |
 
-Secrets are read-existing + seeded via `vault_sync` — you are only prompted for what's missing.
+The repository embeds no deployment profile, credential value, certificate path, or
+environment-specific endpoint. Supply those at runtime through `AgentConfig` and the
+configured secret provider.
 
-<!-- END agent-os-genesis-deploy -->
+<!-- END agent-utilities-deployment -->
 
 ## Environment Variables
 
@@ -345,7 +344,7 @@ Secrets are read-existing + seeded via `vault_sync` — you are only prompted fo
 | `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
 | `EUNOMIA_REMOTE_URL` | `http://eunomia-server:8000` |  |
-| `OBJECTSTORE_STORES` | `{"media": {"backend": "s3", "bucket": "media-prod", "profile": "prod"}, "minio": {"backend": "s3", "endpoint": "http://minio.arpa:9000"}, "reports": {"backend": "gcs", "bucket": "acme-reports"}, "archive": {"backend": "azure", "bucket": "archive"}}` | Named stores (JSON). The zero-infra "local" filesystem store always exists. |
+| `OBJECTSTORE_STORES` | `{"media": {"backend": "s3", "bucket": "media-prod", "profile": "prod"}, "minio": {"backend": "s3", "endpoint": "http://minio.example.invalid:9000"}, "reports": {"backend": "gcs", "bucket": "acme-reports"}, "archive": {"backend": "azure", "bucket": "archive"}}` | Named stores (JSON). The zero-infra "local" filesystem store always exists. |
 | `OBJECTSTORE_DEFAULT_STORE` | `local` |  |
 | `OBJECTSTORE_FS_ROOT` | `~/.local/share/objectstore-mcp` |  |
 | `OBJECTSTORE_MAX_GET_BYTES` | `10485760` | Safety limits (bytes / keys) |
@@ -382,3 +381,19 @@ Secrets are read-existing + seeded via `vault_sync` — you are only prompted fo
 
 _27 package + 13 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
+
+<!-- GOVERNED-CAPABILITY:START -->
+## Governed capability contract
+
+This package ships a compact canonical skill surface with specialist procedures
+kept as referenced workflows. The current MCP tools, skill metadata,
+`connector_manifest.yml`, ontology, mappings, shapes, fixtures, migrations,
+tool-schema fingerprints, and certification metadata form one versioned
+capability contract. Validate them together; do not rely on stale tool names or
+historical per-task skill wrappers.
+
+Runtime endpoints, credentials, certificate trust, tenant identity, retention,
+and observability policy are deployment inputs and are never packaged values.
+See [Configuration, trust, and privacy](docs/configuration.md) before enabling a
+network transport, connector ingestion, GraphOS delegation, or trace export.
+<!-- GOVERNED-CAPABILITY:END -->

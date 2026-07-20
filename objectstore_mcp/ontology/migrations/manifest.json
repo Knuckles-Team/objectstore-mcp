@@ -1,0 +1,6 @@
+{
+  "connector": "objectstore-mcp",
+  "current_ontology_source": "objectstore",
+  "migrations": [],
+  "schema_version": "1"
+}

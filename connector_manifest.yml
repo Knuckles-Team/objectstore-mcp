@@ -96,6 +96,7 @@ sync:
   updated_field: last_modified
   pagination: null
   doc_type: objectstore_object
+  tool_schema_sha256: aaddc19a0d95c42630e13878e7ee35410890d60ba795278242162c340516fe18
   raw:
     server: objectstore-mcp
     tool: objects
@@ -110,17 +111,20 @@ sync:
     doc_type: objectstore_object
 provenance:
   generated_by: scripts/generate_connector_manifests.py
-  generated_at: '2026-07-09T00:00:00Z'
+  generated_at: '2026-07-18T00:00:00Z'
   source_artifacts:
   - a2a.json
   - objectstore_mcp/connectors/mcp_source_presets.json
+  - objectstore_mcp/connectors/tool_schema_fingerprints.json
   - objectstore_mcp/ontology/objectstore.ttl
   integrity:
     algorithm: urdna2015-sha256
     hash: 291cff7e1b5c3b2b0a08e66089821e2633c489fb72896cf1cdadb7f7baf8f25f
     triple_count: 52
   signer: ontology-manifest-generator
-  signature: 1a5274e86b355052054915fcb50269f8d293b95d8697f541af2978b2549aeffd
+  signature_algorithm: ed25519
+  signing_public_key: q0Cp7bmQMqJhbofGKKw8xXC6KbFzukBDDke0UYVi8y4
+  signature: S2mcSVEAFqfJq6Vodal96cO1yEUD_PA5gelCe1-FF7AKrUhBAIzsxaR8yQC_8H7Z1JtjDfqWIwOVXJrf0iE3Bw
 policy:
   pii_fields: {}
   tenant_boundary: null

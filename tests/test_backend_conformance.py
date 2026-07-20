@@ -38,6 +38,7 @@ class TestBuckets:
         assert not backend.bucket_exists("alpha")
         created = backend.create_bucket("alpha")
         assert created.name == "alpha"
+        assert created.location is None
         assert backend.bucket_exists("alpha")
         assert [b.name for b in backend.list_buckets()] == ["alpha"]
         info = backend.bucket_info("alpha")
@@ -122,6 +123,31 @@ class TestObjects:
         for bad in ["../escape", "a/../../b", "/abs", "a//b", ""]:
             with pytest.raises(InvalidNameError):
                 backend.put_object("data", bad, b"x")
+
+    def test_symlink_directory_escape_rejected(self, backend, tmp_path):
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        link = backend.root / "data" / "redirect"
+        try:
+            link.symlink_to(outside, target_is_directory=True)
+        except OSError as exc:  # pragma: no cover - platform policy
+            pytest.skip(f"symlinks unavailable: {exc}")
+
+        with pytest.raises(InvalidNameError, match="symbolic links"):
+            backend.put_object("data", "redirect/escape.txt", b"blocked")
+        assert not (outside / "escape.txt").exists()
+
+    def test_symlink_payload_read_rejected(self, backend, tmp_path):
+        outside = tmp_path / "sensitive.txt"
+        outside.write_bytes(b"must-not-cross-store-boundary")
+        link = backend.root / "data" / "alias.txt"
+        try:
+            link.symlink_to(outside)
+        except OSError as exc:  # pragma: no cover - platform policy
+            pytest.skip(f"symlinks unavailable: {exc}")
+
+        with pytest.raises(InvalidNameError, match="symbolic links"):
+            backend.get_object("data", "alias.txt")
 
     def test_copy(self, backend):
         backend.create_bucket("backup")

@@ -8,13 +8,16 @@ CONCEPT:AU-KG.ingest.enterprise-source-extractor.
 
 from __future__ import annotations
 
-import objectstore_mcp.kg_ingest as kg
+import pytest
+from agent_utilities.knowledge_graph.memory.native_ingest import NativeIngestError
+
 from objectstore_mcp.kg_ingest import ingest_buckets, ingest_entities, ingest_objects
 
 
 class _FakeTxn:
     def __init__(self):
         self.nodes = {}
+        self.edges = []
         self.committed = False
 
     def begin(self, graph=None):
@@ -24,33 +27,27 @@ class _FakeTxn:
     def add_node(self, txn, node_id, props):
         self.nodes[node_id] = props
 
+    def add_edge(self, txn, source, target, props):
+        self.edges.append((source, target, props))
+
     def commit(self, txn):
         self.committed = True
         return True
 
 
-class _FakeEdges:
-    def __init__(self):
-        self.edges = []
-
-    def add(self, src, dst, props):
-        self.edges.append((src, dst, props))
-
-
 class _FakeClient:
     def __init__(self):
         self.txn = _FakeTxn()
-        self.edges = _FakeEdges()
 
 
 def test_ingest_entities_writes_nodes_and_edges():
     c = _FakeClient()
     res = ingest_entities(
         [
-            {"id": "a", "type": "Bucket", "name": "b"},
-            {"id": "s", "type": "ObjectStore"},
+            {"id": "a", "node_type": "Bucket", "name": "b"},
+            {"id": "s", "node_type": "ObjectStore"},
         ],
-        [{"source": "a", "target": "s", "type": "inStore"}],
+        [{"source": "a", "target": "s", "relationship": "inStore"}],
         client=c,
         graph="__commons__",
     )
@@ -60,7 +57,7 @@ def test_ingest_entities_writes_nodes_and_edges():
     # provenance is stamped
     assert c.txn.nodes["a"]["source"] == "objectstore-mcp"
     assert c.txn.nodes["a"]["domain"] == "objectstore"
-    assert c.edges.edges == [("a", "s", {"type": "inStore"})]
+    assert c.txn.edges == [("a", "s", {"relationship": "inStore"})]
 
 
 def test_ingest_buckets_maps_bucket_and_store():
@@ -72,25 +69,25 @@ def test_ingest_buckets_maps_bucket_and_store():
         ],
         store="minio",
         backend="s3",
-        endpoint="http://minio.arpa:9000",
+        endpoint="http://minio.example:9000",
         client=c,
         graph="__commons__",
     )
     # 1 store node + 2 bucket nodes; 2 inStore edges
     assert res == {"nodes": 3, "edges": 2}
     store_node = c.txn.nodes["objectstore:store:minio"]
-    assert store_node["type"] == "ObjectStore"
+    assert store_node["node_type"] == "ObjectStore"
     assert store_node["backendType"] == "s3"
-    assert store_node["endpoint"] == "http://minio.arpa:9000"
+    assert store_node["endpoint"] == "http://minio.example:9000"
     bucket_node = c.txn.nodes["objectstore:bucket:minio/media-prod"]
-    assert bucket_node["type"] == "Bucket"
+    assert bucket_node["node_type"] == "Bucket"
     assert bucket_node["location"] == "us"
     assert bucket_node["externalToolId"] == "minio/media-prod"
     assert (
         "objectstore:bucket:minio/media-prod",
         "objectstore:store:minio",
-        {"type": "inStore"},
-    ) in c.edges.edges
+        {"relationship": "inStore"},
+    ) in c.txn.edges
 
 
 def test_ingest_objects_maps_object_and_bucket():
@@ -114,29 +111,26 @@ def test_ingest_objects_maps_object_and_bucket():
     # 1 bucket node + 1 object node; 1 inBucket edge
     assert res == {"nodes": 2, "edges": 1}
     obj = c.txn.nodes["objectstore:object:local/scratch/logs/app.log"]
-    assert obj["type"] == "Object"
+    assert obj["node_type"] == "Object"
     assert obj["objectKey"] == "logs/app.log"
     assert obj["byteSize"] == 1234
     assert obj["contentType"] == "text/plain"
     assert obj["storageClass"] == "STANDARD"
-    assert c.txn.nodes["objectstore:bucket:local/scratch"]["type"] == "Bucket"
-    assert c.edges.edges == [
+    assert c.txn.nodes["objectstore:bucket:local/scratch"]["node_type"] == "Bucket"
+    assert c.txn.edges == [
         (
             "objectstore:object:local/scratch/logs/app.log",
             "objectstore:bucket:local/scratch",
-            {"type": "inBucket"},
+            {"relationship": "inBucket"},
         )
     ]
 
 
-def test_ingest_noops_without_engine(monkeypatch):
-    # No injected client, no shared primitive, no reachable engine -> clean no-op.
-    monkeypatch.setattr(kg, "_shared_ingest_entities", None)
-    monkeypatch.setattr(kg, "_client", lambda: (None, ""))
-    assert ingest_entities([{"id": "a", "type": "Bucket"}]) is None
+def test_retired_structural_alias_is_rejected():
+    with pytest.raises(NativeIngestError, match="canonical node_type"):
+        ingest_entities([{"id": "a", "type": "Bucket"}], client=_FakeClient())
 
 
-def test_ingest_empty_is_noop():
-    assert ingest_entities([], client=_FakeClient()) is None
-    assert ingest_buckets([], store="local", client=_FakeClient()) is None
-    assert ingest_objects([], store="local", bucket="b", client=_FakeClient()) is None
+def test_empty_native_ingest_is_rejected():
+    with pytest.raises(NativeIngestError, match="at least one entity"):
+        ingest_entities([], client=_FakeClient())
