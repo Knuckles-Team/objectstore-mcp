@@ -9,7 +9,7 @@ description = "Object storage (S3/MinIO/R2, Google Cloud Storage, Azure Blob, lo
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "agent-utilities>=1.27.1,<2.0.0", "python-dotenv>=1.2.2",]
+dependencies = [ "agent-utilities>=2.0.0,<3.0.0", "python-dotenv>=1.2.2",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -18,8 +18,8 @@ email = "maintainers@users.noreply.github.com"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-utilities[mcp]>=1.27.1,<2.0.0",]
-agent = [ "agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0",]
+mcp = [ "agent-utilities[mcp]>=2.0.0,<3.0.0",]
+agent = [ "agent-utilities[agent-runtime,logfire]>=2.0.0,<3.0.0",]
 s3 = [
     # CONCEPT:PHASE2-RECONCILE — relaxed off the modernize-bump's 1.43.52
     # floor: lighteval (pulled in via data-science-mcp[eval]) transitively
