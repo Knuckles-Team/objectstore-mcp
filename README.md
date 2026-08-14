@@ -9,7 +9,7 @@ The object-storage connector for the agent-utilities fleet: **one MCP tool
 surface over S3 and S3-compatible stores (MinIO, Cloudflare R2), Google Cloud
 Storage, Azure Blob Storage, and a zero-infra local-filesystem backend**.
 
-*Version: 2.0.0*
+*Version: 2.1.0*
 
 > **Documentation** — Installation, deployment, and usage across the API, CLI, and
 > MCP interfaces are maintained in [`docs/`](docs/index.md).
@@ -338,13 +338,13 @@ configured secret provider.
 | `TRANSPORT` | `stdio` | options: stdio, streamable-http, sse |
 | `ENABLE_OTEL` | `True` |  |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:8080/api/public/otel` |  |
-| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` | `pk-...` |  |
-| `OTEL_EXPORTER_OTLP_SECRET_KEY` | `sk-...` |  |
+| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` | secret-injected |  |
+| `OTEL_EXPORTER_OTLP_SECRET_KEY` | secret-injected |  |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` |  |
 | `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
 | `EUNOMIA_REMOTE_URL` | `http://eunomia-server:8000` |  |
-| `OBJECTSTORE_STORES` | `{"media": {"backend": "s3", "bucket": "media-prod", "profile": "prod"}, "minio": {"backend": "s3", "endpoint": "http://minio.example.invalid:9000"}, "reports": {"backend": "gcs", "bucket": "acme-reports"}, "archive": {"backend": "azure", "bucket": "archive"}}` | Named stores (JSON). The zero-infra "local" filesystem store always exists. |
+| `OBJECTSTORE_STORES` | `{"primary": {"backend": "s3", "bucket": "example-bucket", "endpoint": "https://object-store.example"}}` | Named stores (JSON). The zero-infra "local" filesystem store always exists. |
 | `OBJECTSTORE_DEFAULT_STORE` | `local` |  |
 | `OBJECTSTORE_FS_ROOT` | `~/.local/share/objectstore-mcp` |  |
 | `OBJECTSTORE_MAX_GET_BYTES` | `10485760` | Safety limits (bytes / keys) |
@@ -354,7 +354,7 @@ configured secret provider.
 | `OBJECTSTORE_MAX_LIST_KEYS` | `1000` |  |
 | `OBJECTSTORE_ALLOW_DELETE` | `true` |  |
 | `OBJECTSTORE_ALLOW_BUCKET_DELETE` | `false` |  |
-| `AZURE_STORAGE_CONNECTION_STRING` | — | Azure is the exception — the code reads this connection string directly: |
+| `AZURE_STORAGE_CONNECTION_STRING` | — | Provider credentials resolve through each SDK's own chain (this package never reads them itself — the cloud SDK does): S3  : boto3 chain (AWS access key / secret / profile, ~/.aws, instance role) GCS : the gcloud application-default credentials chain (service-account file) Azure is the exception — the code reads this connection string directly: |
 | `DEFAULT_AGENT_NAME` | `ObjectStore Agent` |  |
 | `AGENT_DESCRIPTION` | `AI agent for object-storage operations.` |  |
 | `AGENT_SYSTEM_PROMPT` | — |  |
@@ -365,21 +365,23 @@ configured secret provider.
 
 | Variable | Example | Description |
 |----------|---------|-------------|
-| `MCP_TOOL_MODE` | `condensed` | Tool surface: `condensed` | `verbose` | `both` |
+| `MCP_TOOL_MODE` | `intent` | Tool surface: `intent` \| `condensed` \| `verbose` \| `both` |
 | `MCP_ENABLED_TOOLS` | — | Comma-separated tool allow-list |
 | `MCP_DISABLED_TOOLS` | — | Comma-separated tool deny-list |
 | `MCP_ENABLED_TAGS` | — | Comma-separated tag allow-list |
 | `MCP_DISABLED_TAGS` | — | Comma-separated tag deny-list |
-| `MCP_CLIENT_AUTH` | — | Outbound MCP auth (`oidc-client-credentials` for fleet calls) |
+| `MCP_CLIENT_AUTH` | — | Outbound MCP child auth: `oidc-client-credentials` \| `basic` \| `none` |
 | `OIDC_CLIENT_ID` | — | OIDC client id (service-account auth) |
-| `OIDC_CLIENT_SECRET` | — | OIDC client secret (service-account auth) |
+| `OIDC_CLIENT_SECRET_REF` | `secret://identity/oidc-client-secret` | Runtime secret reference for the OIDC service account |
+| `MCP_BASIC_AUTH_USERNAME` | — | HTTP Basic username (`MCP_CLIENT_AUTH=basic`) |
+| `MCP_BASIC_AUTH_PASSWORD_REF` | `secret://identity/mcp-basic-password` | Runtime secret reference for HTTP Basic auth (`MCP_CLIENT_AUTH=basic`) |
 | `DEBUG` | `False` | Verbose logging |
 | `PYTHONUNBUFFERED` | `1` | Unbuffered stdout (recommended in containers) |
 | `PROVIDER` | `openai` | LLM provider for the agent |
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_27 package + 13 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_27 package + 15 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 <!-- GOVERNED-CAPABILITY:START -->

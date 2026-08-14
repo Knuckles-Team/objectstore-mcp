@@ -1,7 +1,7 @@
 {
   "name": "objectstore-mcp-agent",
   "type": "agent",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Object storage (S3/MinIO/R2, Google Cloud Storage, Azure Blob, local filesystem) API + MCP Server + A2A Server for Agentic AI!",
   "url": "https://github.com/Knuckles-Team/objectstore-mcp/tree/main",
   "license": "MIT",
