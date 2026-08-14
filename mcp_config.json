@@ -7,8 +7,7 @@
         "objectstore-mcp"
       ],
       "env": {
-        "MCP_TOOL_MODE": "condensed",
-        "AZURE_STORAGE_CONNECTION_STRING": "",
+        "MCP_TOOL_MODE": "intent",
         "OBJECTSTORETOOL": "True",
         "OBJECTSTORE_ALLOW_BUCKET_DELETE": "false",
         "OBJECTSTORE_ALLOW_DELETE": "true",
@@ -18,7 +17,8 @@
         "OBJECTSTORE_MAX_GET_BYTES": "10485760",
         "OBJECTSTORE_MAX_LIST_KEYS": "1000",
         "OBJECTSTORE_MAX_PUT_BYTES": "10485760",
-        "OBJECTSTORE_MAX_TRANSFER_BYTES": "104857600"
+        "OBJECTSTORE_MAX_TRANSFER_BYTES": "104857600",
+        "OBJECTSTORE_STORES": "{\"primary\": {\"backend\": \"s3\", \"bucket\": \"example-bucket\", \"endpoint\": \"https://object-store.example\"}}"
       }
     }
   }
