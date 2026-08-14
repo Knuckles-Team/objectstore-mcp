@@ -70,7 +70,9 @@ class FilesystemBackend:
         try:
             relative = path.relative_to(self.root)
         except ValueError as exc:  # defensive: callers must stay below root
-            raise InvalidNameError("Filesystem object path escapes the store root.") from exc
+            raise InvalidNameError(
+                "Filesystem object path escapes the store root."
+            ) from exc
 
         current = self.root
         for part in relative.parts:
@@ -82,9 +84,7 @@ class FilesystemBackend:
         return path
 
     def _bucket_path(self, bucket: str) -> Path:
-        return self._reject_symlink_components(
-            self.root / validate_bucket_name(bucket)
-        )
+        return self._reject_symlink_components(self.root / validate_bucket_name(bucket))
 
     def _object_path(self, bucket: str, key: str) -> Path:
         return self._reject_symlink_components(

@@ -69,7 +69,9 @@ def _decode_payload(p: dict[str, Any], limits: Limits) -> bytes:
         try:
             data = base64.b64decode(p["content_base64"], validate=True)
         except (binascii.Error, ValueError) as exc:
-            raise ValueError(f"content_base64 is not valid base64: {type(exc).__name__}") from exc
+            raise ValueError(
+                f"content_base64 is not valid base64: {type(exc).__name__}"
+            ) from exc
     else:
         raise ValueError("put requires 'text' or 'content_base64' in params_json.")
     if len(data) > limits.max_put_bytes:

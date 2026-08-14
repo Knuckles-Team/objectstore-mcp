@@ -158,7 +158,9 @@ def load_stores() -> dict[str, StoreConfig]:
         try:
             parsed = json.loads(raw)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"OBJECTSTORE_STORES is not valid JSON: {type(exc).__name__}") from exc
+            raise ValueError(
+                f"OBJECTSTORE_STORES is not valid JSON: {type(exc).__name__}"
+            ) from exc
         if not isinstance(parsed, dict):
             raise ValueError("OBJECTSTORE_STORES must be a JSON object.")
         for name, entry in parsed.items():
