@@ -101,7 +101,7 @@ sync:
   updated_field: last_modified
   pagination: null
   doc_type: objectstore_object
-  tool_schema_sha256: aaddc19a0d95c42630e13878e7ee35410890d60ba795278242162c340516fe18
+  tool_schema_sha256: 53c6521bbd4f33aaef02ef4b633c5f78b4c874d8947c1547201a66630b1427ea
   raw:
     server: objectstore-mcp
     tool: objects

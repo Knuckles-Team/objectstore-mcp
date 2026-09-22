@@ -12,7 +12,7 @@ import base64
 import binascii
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastmcp import FastMCP
 from pydantic import Field
@@ -101,7 +101,19 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(tags={"objects"})
     async def objects(
-        action: str = Field(
+        action: Literal[
+            "copy",
+            "delete",
+            "delete_batch",
+            "get",
+            "head",
+            "list",
+            "metadata_get",
+            "metadata_set",
+            "move",
+            "presign",
+            "put",
+        ] = Field(
             description=(
                 "Object action. One of: 'list' (prefix/delimiter pagination), "
                 "'head' (stat), 'get' (size-capped read; mode text|base64|auto), "
