@@ -99,7 +99,22 @@ def _encode_content(data: bytes, mode: str) -> dict[str, Any]:
 def register_objectstore_tools(mcp: FastMCP) -> None:
     """Register the ``objects``, ``buckets``, and ``transfer`` tools."""
 
-    @mcp.tool(tags={"objects"})
+    @mcp.tool(
+        tags={"objects"},
+        annotations={
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+            "openWorldHint": True,
+        },
+        meta={
+            "eg.annotations": {
+                "modalities_in": ["text"],
+                "modalities_out": ["text"],
+                "provides": ["eg:capability/action/file-write"],
+            }
+        },
+    )
     async def objects(
         action: Literal[
             "copy",
