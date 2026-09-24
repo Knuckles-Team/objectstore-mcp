@@ -120,31 +120,27 @@ Pick the extra that matches what you want to run (provider extras are additive):
 | Extra | Installs | Use when |
 |-------|----------|----------|
 | `objectstore-mcp[mcp]` | Connector-focused MCP server (`agent-utilities[mcp]` — FastMCP/FastAPI + `epistemic-graph[full]`) | You only run the **MCP server** (smallest install / image) |
-| `objectstore-mcp[agent]` | Agent runtime (`agent-utilities[agent-runtime,logfire]` — model orchestration + `epistemic-graph[full]`) | You run the **integrated A2A agent** |
 | `objectstore-mcp[all]` | Everything (`mcp` + `agent` + `s3` + `gcs` + `azure` + `logfire`) | Development / both surfaces |
 
 ```bash
 pip install objectstore-mcp            # core: local filesystem backend only
 pip install objectstore-mcp[mcp]       # connector-focused MCP server (FastMCP/FastAPI)
-pip install objectstore-mcp[agent]     # full A2A agent runtime + epistemic-graph engine
 pip install objectstore-mcp[mcp,s3]    # + boto3 (S3, MinIO, R2)
 pip install objectstore-mcp[mcp,gcs]   # + google-cloud-storage
 pip install objectstore-mcp[mcp,azure] # + azure-storage-blob
 pip install objectstore-mcp[all]       # everything (MCP + agent + all providers)
 ```
 
-### Container images (`:mcp` vs `:agent`)
+### Container image
 
-One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
+One multi-stage `docker/Dockerfile` builds a single, right-sized image:
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
 | `example/objectstore-mcp:mcp` | `--target mcp` | `objectstore-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `objectstore-mcp` |
-| `example/objectstore-mcp@sha256:<digest>` | `--target agent` (default) | `objectstore-mcp[agent]` — **agent runtime**, model orchestration + `epistemic-graph[full]` | `objectstore-agent` |
 
 ```bash
 docker build --target mcp   -t example/objectstore-mcp:mcp    docker/   # connector-focused MCP server
-docker build --target agent -t example/objectstore-mcp:agent-local docker/   # agent runtime
 ```
 
 Or pull a prebuilt image:
@@ -156,16 +152,13 @@ docker pull example/objectstore-mcp@sha256:<digest>   # agent runtime (default)
 
 > The `:mcp` tag is the **MCP-serving image** (built from
 > `docker/Dockerfile --target mcp`, installing `objectstore-mcp[mcp]`). The default
-> the immutable agent image is the **full agent image** (`--target agent`, `objectstore-mcp[agent]`)
 > which also bundles the Pydantic AI agent and the epistemic-graph engine — use it
 > when you run `objectstore-agent` (the agent), not just the MCP server.
 
 ### Knowledge-graph database (`epistemic-graph`)
 
-Both `[mcp]` and `[agent]` carry the **epistemic-graph** engine through the required
-Agent Utilities core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
-the server connector-focused; `[agent]` additionally enables model orchestration. Local
-deployments can use the bundled engine. For production or shared state, run
+`[mcp]` carries the **epistemic-graph** engine through the required Agent Utilities
+core dependency (`epistemic-graph[full]`). Local deployments can use the bundled engine. For production or shared state, run
 **epistemic-graph as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
 diagrams are documented in the
@@ -236,8 +229,6 @@ Example tool calls (any MCP client):
 
 > **Install the connector-focused `[mcp]` extra.** Examples use `objectstore-mcp[mcp]` to add
 > FastMCP / FastAPI through `agent-utilities[mcp]`; the required Agent Utilities core
-> still carries `epistemic-graph[full]`. The `[agent]` extra additionally
-> enables model orchestration.
 > Combine it with the storage-provider extras needed by the deployment.
 
 ```json
@@ -253,12 +244,6 @@ Example tool calls (any MCP client):
     }
   }
 }
-```
-
-Run the A2A agent server against a live MCP server:
-
-```bash
-objectstore-agent --mcp-url http://localhost:8000/mcp --host 0.0.0.0 --port 9001
 ```
 
 <!-- BEGIN GENERATED: additional-deployment-options -->
@@ -302,7 +287,6 @@ See [`docs/`](docs/) for architecture, concepts, and deployment details.
 
 MIT — see [LICENSE](LICENSE).
 
-
 <!-- BEGIN agent-utilities-deployment (generated; do not edit between markers) -->
 
 ## Deploy with `agent-utilities-deployment`
@@ -316,7 +300,7 @@ to **"deploy `objectstore-mcp` with agent-utilities-deployment"**.
 | Install mode | Command |
 |------|---------|
 | Installed package | `uv tool install "objectstore-mcp[mcp]"`, then run `objectstore-mcp` |
-| Editable source | `uv pip install -e ".[agent]"`, then run `objectstore-mcp` |
+| Editable source | `uv pip install -e ".[mcp]"`, then run `objectstore-mcp` |
 | Immutable container | deploy `registry.example.invalid/objectstore-mcp@sha256:<digest>` through the operator-selected orchestrator |
 
 The repository embeds no deployment profile, credential value, certificate path, or
