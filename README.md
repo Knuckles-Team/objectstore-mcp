@@ -66,12 +66,13 @@ batch deletes are enforced uniformly in the tool layer, regardless of backend.
 
 <!-- MCP-TOOLS-TABLE:START -->
 
-#### Condensed action-routed tools (default — `MCP_TOOL_MODE=condensed`)
+#### Condensed action-routed tools (`MCP_TOOL_MODE=condensed`)
 
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
 | `buckets` | `OBJECTSTORETOOL` | Manage buckets/containers and inspect configured stores. |
 | `objects` | `OBJECTSTORETOOL` | List, read, write, copy, move, delete, presign, and tag objects. |
+| `objectstore_ingest` | `OBJECTSTORETOOL` | Natively ingest object/bucket metadata into epistemic-graph (Wire-First). |
 | `transfer` | `OBJECTSTORETOOL` | Move data between the local filesystem and object storage. |
 
 #### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
@@ -99,7 +100,7 @@ batch deletes are enforced uniformly in the tool layer, regardless of backend.
 
 </details>
 
-_3 action-routed tool(s) (default) · 15 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+_4 action-routed tool(s) · 15 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (**`intent` default** — the six verb-tools, granular set loaded on demand · `condensed` action-routed · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 ## Backend × capability matrix
@@ -338,8 +339,6 @@ configured secret provider.
 | `TRANSPORT` | `stdio` | options: stdio, streamable-http, sse |
 | `ENABLE_OTEL` | `True` |  |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:8080/api/public/otel` |  |
-| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` | secret-injected |  |
-| `OTEL_EXPORTER_OTLP_SECRET_KEY` | secret-injected |  |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` |  |
 | `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
@@ -360,6 +359,8 @@ configured secret provider.
 | `AGENT_SYSTEM_PROMPT` | — |  |
 | `MCP_URL` | `http://localhost:8000/mcp` |  |
 | `OBJECTSTORETOOL` | `True` |  |
+| `OBJECTSTORE_MCP_MCP_IMAGE` | `registry.example.invalid/objectstore-mcp@sha256:<digest>` |  |
+| `OBJECTSTORE_MCP_AGENT_IMAGE` | `registry.example.invalid/objectstore-agent@sha256:<digest>` |  |
 
 #### Inherited agent-utilities variables (apply to every connector)
 
@@ -377,8 +378,8 @@ configured secret provider.
 | `MCP_BASIC_AUTH_PASSWORD_REF` | `secret://identity/mcp-basic-password` | Runtime secret reference for HTTP Basic auth (`MCP_CLIENT_AUTH=basic`) |
 | `DEBUG` | `False` | Verbose logging |
 | `PYTHONUNBUFFERED` | `1` | Unbuffered stdout (recommended in containers) |
-| `PROVIDER` | `openai` | LLM provider for the agent |
-| `MODEL_ID` | `gpt-4o` | Model id for the agent |
+| `PROVIDER` | — | Operator-configured LLM provider for the agent |
+| `MODEL_ID` | — | Operator-configured model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
 _27 package + 15 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
