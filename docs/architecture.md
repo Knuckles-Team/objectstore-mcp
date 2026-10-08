@@ -47,7 +47,7 @@ flowchart LR
 
 - **Backends are bucket-agnostic.** The bucket is a per-call argument;
   per-store default buckets are a tool-layer convenience. This keeps each
-  backend a thin adapter and lets one store config span many buckets.
+  backend a thin adapter and lets one store config span multiple buckets.
 - **Safety lives in the tool layer, not the backends.** Backends accept a
   `max_bytes` hint for cheap pre-flight size checks, but every cap, flag,
   and dry-run decision is made once, uniformly, in `mcp_objectstore.py`.

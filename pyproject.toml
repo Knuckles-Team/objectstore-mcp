@@ -87,3 +87,6 @@ ignore_names = ["request", "config", "local_store_env"]
 [tool.setuptools.packages.find]
 where = [ ".",]
 include = [ "objectstore_mcp*",]
+
+[tool.pipelines_hooks.ste]
+exempt = ["specs/*", "specs/**/*"]

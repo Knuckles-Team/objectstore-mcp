@@ -32,7 +32,7 @@ Storage, Azure Blob Storage, and a zero-infra local-filesystem backend**.
 `objectstore-mcp` wraps heterogeneous object stores behind one typed,
 deterministic MCP tool surface, plus an optional Pydantic-AI A2A agent server
 (`objectstore-agent`). Safety caps, explicit buckets, and dry-run-by-default
-batch deletes are enforced uniformly in the tool layer, regardless of backend.
+batch deletes are enforced uniformly in the tool layer, in either case of backend.
 
 ## What it provides
 
@@ -115,12 +115,12 @@ _3 action-routed tool(s) (default) · 15 verbose 1:1 tool(s). Each is enabled un
 
 ## Installation
 
-Pick the extra that matches what you want to run (provider extras are additive):
+Pick the extra that matches what the operator want to run (provider extras are additive):
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `objectstore-mcp[mcp]` | Connector-focused MCP server (`agent-utilities[mcp]` — FastMCP/FastAPI + `epistemic-graph[full]`) | You only run the **MCP server** (smallest install / image) |
-| `objectstore-mcp[agent]` | Agent runtime (`agent-utilities[agent-runtime,logfire]` — model orchestration + `epistemic-graph[full]`) | You run the **integrated A2A agent** |
+| `objectstore-mcp[mcp]` | Connector-focused MCP server (`agent-utilities[mcp]` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
+| `objectstore-mcp[agent]` | Agent runtime (`agent-utilities[agent-runtime,logfire]` — model orchestration + `epistemic-graph[full]`) | The operator run the **integrated A2A agent** |
 | `objectstore-mcp[all]` | Everything (`mcp` + `agent` + `s3` + `gcs` + `azure` + `logfire`) | Development / both surfaces |
 
 ```bash
@@ -158,13 +158,13 @@ docker pull example/objectstore-mcp@sha256:<digest>   # agent runtime (default)
 > `docker/Dockerfile --target mcp`, installing `objectstore-mcp[mcp]`). The default
 > the immutable agent image is the **full agent image** (`--target agent`, `objectstore-mcp[agent]`)
 > which also bundles the Pydantic AI agent and the epistemic-graph engine — use it
-> when you run `objectstore-agent` (the agent), not just the MCP server.
+> when the operator run `objectstore-agent` (the agent), not just the MCP server.
 
 ### Knowledge-graph database (`epistemic-graph`)
 
 Both `[mcp]` and `[agent]` carry the **epistemic-graph** engine through the required
 Agent Utilities core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
-the server connector-focused; `[agent]` additionally enables model orchestration. Local
+the server connector-focused; `[agent]` also enables model orchestration. Local
 deployments can use the bundled engine. For production or shared state, run
 **epistemic-graph as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
@@ -236,7 +236,7 @@ Example tool calls (any MCP client):
 
 > **Install the connector-focused `[mcp]` extra.** Examples use `objectstore-mcp[mcp]` to add
 > FastMCP / FastAPI through `agent-utilities[mcp]`; the required Agent Utilities core
-> still carries `epistemic-graph[full]`. The `[agent]` extra additionally
+> still carries `epistemic-graph[full]`. The `[agent]` extra also
 > enables model orchestration.
 > Combine it with the storage-provider extras needed by the deployment.
 

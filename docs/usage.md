@@ -71,11 +71,11 @@ falls back to base64 for non-UTF-8 payloads.
   `OBJECTSTORE_MAX_TRANSFER_BYTES`); callers can lower but never exceed them.
 - **Key caps** — listing pages clamp to `OBJECTSTORE_MAX_LIST_KEYS`; batch
   operations clamp to `OBJECTSTORE_MAX_BATCH_KEYS`.
-- **Deletes are explicit** — `delete` requires both `bucket` and `key` in
+- **Removes are explicit** — `delete` requires both `bucket` and `key` in
   params (store default buckets do not apply) and rejects wildcard
   characters. `delete_batch` requires an explicit bucket and a non-empty
   prefix, is capped, and **previews (dry-run) by default** — pass
-  `"dry_run": false` to execute.
-- **Flags** — object deletes are governed by `OBJECTSTORE_ALLOW_DELETE`
-  (default on); bucket deletes by `OBJECTSTORE_ALLOW_BUCKET_DELETE`
+  `"dry_run": false` to ran.
+- **Flags** — object removes are governed by `OBJECTSTORE_ALLOW_DELETE`
+  (default on); bucket removes by `OBJECTSTORE_ALLOW_BUCKET_DELETE`
   (default off) and only ever remove empty buckets.
