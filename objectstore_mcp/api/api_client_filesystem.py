@@ -15,7 +15,7 @@ import hashlib
 import json
 import mimetypes
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from objectstore_mcp.api.api_client_base import (
@@ -146,9 +146,7 @@ class FilesystemBackend:
             key=key,
             size=stat.st_size,
             etag=digest,
-            last_modified=datetime.fromtimestamp(
-                stat.st_mtime, tz=timezone.utc
-            ).isoformat(),
+            last_modified=datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
             content_type=content_type,
             metadata=dict(sidecar.get("metadata") or {}),
         )
@@ -169,7 +167,7 @@ class FilesystemBackend:
         stat = path.stat()
         return BucketInfo(
             name=path.name,
-            created=datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
+            created=datetime.fromtimestamp(stat.st_ctime, tz=UTC).isoformat(),
             # The backing path is deployment-private and must not escape via an
             # MCP response, trace, or downstream knowledge-graph record.
             location=None,
