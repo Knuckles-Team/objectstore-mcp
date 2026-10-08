@@ -9,7 +9,7 @@ Requires the ``azure`` extra: ``pip install objectstore-mcp[azure]``.
 """
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from objectstore_mcp.api.api_client_base import (
@@ -303,6 +303,6 @@ class AzureBlobBackend:
             blob_name=key,
             account_key=account_key,
             permission=permission,
-            expiry=datetime.now(timezone.utc) + timedelta(seconds=expires_in),
+            expiry=datetime.now(UTC) + timedelta(seconds=expires_in),
         )
         return f"{self._blob_client(bucket, key).url}?{sas}"
