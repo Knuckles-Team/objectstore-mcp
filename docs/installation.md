@@ -11,7 +11,7 @@ pip install objectstore-mcp[all]       # every cloud backend
 ```
 
 The core install carries **zero cloud dependencies**: only the filesystem
-backend is importable, and constructing a cloud backend without its SDK
+backend is importable, and building a cloud backend without its SDK
 raises a `MissingDependencyError` that names the extra to install.
 
 ## Credentials
