@@ -1122,13 +1122,13 @@ falls back to base64 for non-UTF-8 payloads.</p>
   <code>OBJECTSTORE_MAX_TRANSFER_BYTES</code>); callers can lower but never exceed them.</li>
 <li><strong>Key caps</strong> — listing pages clamp to <code>OBJECTSTORE_MAX_LIST_KEYS</code>; batch
   operations clamp to <code>OBJECTSTORE_MAX_BATCH_KEYS</code>.</li>
-<li><strong>Deletes are explicit</strong> — <code>delete</code> requires both <code>bucket</code> and <code>key</code> in
+<li><strong>Removes are explicit</strong> — <code>delete</code> requires both <code>bucket</code> and <code>key</code> in
   params (store default buckets do not apply) and rejects wildcard
   characters. <code>delete_batch</code> requires an explicit bucket and a non-empty
   prefix, is capped, and <strong>previews (dry-run) by default</strong> — pass
-  <code>"dry_run": false</code> to execute.</li>
-<li><strong>Flags</strong> — object deletes are governed by <code>OBJECTSTORE_ALLOW_DELETE</code>
-  (default on); bucket deletes by <code>OBJECTSTORE_ALLOW_BUCKET_DELETE</code>
+  <code>"dry_run": false</code> to ran.</li>
+<li><strong>Flags</strong> — object removes are governed by <code>OBJECTSTORE_ALLOW_DELETE</code>
+  (default on); bucket removes by <code>OBJECTSTORE_ALLOW_BUCKET_DELETE</code>
   (default off) and only ever remove empty buckets.</li>
 </ul>
 
