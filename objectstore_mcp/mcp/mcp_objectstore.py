@@ -508,7 +508,7 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
 
         if action == "buckets":
             bucket_dicts = [b.to_dict() for b in backend.list_buckets()]
-            result = ingest_buckets(
+            result = await ingest_buckets(
                 bucket_dicts,
                 store=config.name,
                 backend=config.backend,
@@ -529,7 +529,7 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
                 bucket, prefix=p.get("prefix", ""), max_keys=max_keys
             )
             object_dicts = [o.to_dict() for o in page.objects]
-            result = ingest_objects(object_dicts, store=config.name, bucket=bucket)
+            result = await ingest_objects(object_dicts, store=config.name, bucket=bucket)
             return {
                 "store": config.name,
                 "bucket": bucket,

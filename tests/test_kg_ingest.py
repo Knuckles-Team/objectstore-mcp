@@ -1,135 +1,76 @@
 """Native epistemic-graph typed-node ingestion — Wire-First coverage.
 
 Exercises the real ``ingest_entities`` / ``ingest_buckets`` / ``ingest_objects`` seam
-with a fake engine client (no engine required), asserting the txn add_node/commit +
-edge calls and the object-store record → :ObjectStore/:Bucket/:Object mapping.
+against a fake transport boundary (one level below ``KnowledgeIngest``), so the SDK's
+own request-building and validation contract runs unmodified. Asserts the object-store
+record → :ObjectStore/:Bucket/:Object mapping lands as real
+``SourceRecord``/``SourceRelationship`` objects.
 CONCEPT:AU-KG.ingest.enterprise-source-extractor.
 """
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
-import msgpack
 import pytest
-from agent_utilities.knowledge_graph.memory.native_ingest import NativeIngestError
-from agent_utilities.security.brain_context import ActorContext, use_actor
-from agent_utilities.security.actor_identity import ActorType
-from agent_utilities.knowledge_graph.core.session import GraphSession, use_session
+from agent_connector_sdk.ingest import IngestError, KnowledgeIngest
 
 from objectstore_mcp.kg_ingest import ingest_buckets, ingest_entities, ingest_objects
 
 
-@pytest.fixture(autouse=True)
-def _governed_session():
-    actor = ActorContext(
-        actor_id="subject:opaque:synthetic",
-        actor_type=ActorType.AUTOMATED_SERVICE,
-        roles=(),
-        tenant_id="tenant:opaque:synthetic",
-        authenticated=True,
-    )
-    session = GraphSession(
-        actor=actor,
-        tenant=actor.tenant_id,
-        scopes=frozenset({"kg:write"}),
-        graph="graph:opaque:synthetic",
-        policy_version="policy:opaque:synthetic",
-        audience="epistemic-graph",
-    )
-    with use_actor(actor), use_session(session):
-        yield
-
-
-class _FakeNodes:
+class _FakeTransport:
     def __init__(self) -> None:
-        self.values: dict[str, dict[str, Any]] = {}
+        self.requests: list[Any] = []
 
-    def properties(self, node_id: str) -> dict[str, Any] | None:
-        return self.values.get(node_id)
+    async def source_status(self, connector: str, stream: str) -> Any:
+        return SimpleNamespace(accepted_checkpoint=None)
 
-    def list(self) -> list[tuple[str, dict[str, Any]]]:
-        return list(self.values.items())
+    async def submit(self, request: Any) -> Any:
+        self.requests.append(request)
+        return SimpleNamespace(
+            affected_count=len(request.records),
+            relationship_count=len(request.relationships),
+        )
 
-
-class _FakeChanges:
-    def __init__(self, nodes: _FakeNodes) -> None:
-        self.nodes = nodes
-        self.edges: list[tuple[str, str, dict[str, Any]]] = []
-        self.applied: list[dict[str, Any]] = []
-        self.records: dict[str, dict[str, Any]] = {}
-        self.versions: dict[str, dict[str, Any]] = {}
-
-    def get(self, envelope_id: str) -> dict[str, Any] | None:
-        return self.records.get(envelope_id)
-
-    def content_version(self, object_id: str) -> dict[str, Any] | None:
-        return self.versions.get(object_id)
-
-    def cursor(self, _source: str, _partition: str = "") -> None:
-        return None
-
-    def apply(self, envelope: dict[str, Any]) -> dict[str, Any]:
-        self.applied.append(envelope)
-        mutation = envelope["mutation"]
-        for operation in mutation["operations"]:
-            method = operation["method"]
-            params = method["params"]
-            properties = msgpack.unpackb(params["properties_msgpack"], raw=False)
-            if method["method"] == "AddNode":
-                self.nodes.values[params["node_id"]] = properties
-            elif method["method"] == "AddEdge":
-                self.edges.append(
-                    (params["source_id"], params["target_id"], properties)
-                )
-        version = envelope["content_version"]
-        self.versions[version["object_id"]] = version
-        self.records[envelope["envelope_id"]] = envelope
-        return {
-            "batch_id": mutation["batch_id"],
-            "replayed": False,
-            "projection_pending": False,
-        }
+    async def store_blob(self, data: bytes) -> str:
+        raise AssertionError("this connector's ingestion carries no media")
 
 
-class _FakeRdf:
-    def validate_shacl(self, _shapes: str, _data_graph: str) -> dict[str, Any]:
-        return {"conforms": True, "results": []}
+@pytest.fixture
+def ingest() -> tuple[KnowledgeIngest, _FakeTransport]:
+    transport = _FakeTransport()
+    return KnowledgeIngest(transport, loop=None), transport
 
 
-class _FakeClient:
-    def __init__(self) -> None:
-        self.nodes = _FakeNodes()
-        self.changes = _FakeChanges(self.nodes)
-        self.rdf = _FakeRdf()
-
-    @staticmethod
-    def supports(operation: str) -> bool:
-        return operation == "ApplyChangeEnvelope"
-
-
-def test_ingest_entities_writes_nodes_and_edges():
-    c = _FakeClient()
-    res = ingest_entities(
+@pytest.mark.asyncio
+async def test_ingest_entities_writes_nodes_and_edges(ingest):
+    service, transport = ingest
+    res = await ingest_entities(
         [
             {"id": "a", "node_type": "Bucket", "name": "b"},
             {"id": "s", "node_type": "ObjectStore"},
         ],
         [{"source": "a", "target": "s", "relationship": "inStore"}],
-        client=c,
+        ingest=service,
     )
     assert res == {"nodes": 2, "edges": 1}
-    assert len(c.changes.applied) == 1
-    assert set(c.nodes.values) == {"a", "s"}
-    # provenance is stamped
-    assert c.nodes.values["a"]["source"] == "objectstore-mcp"
-    assert c.nodes.values["a"]["domain"] == "objectstore"
-    assert c.changes.edges == [("a", "s", {"relationship": "inStore"})]
+    assert len(transport.requests) == 1
+    request = transport.requests[0]
+    assert {r.record_id for r in request.records} == {"a", "s"}
+    bucket_record = next(r for r in request.records if r.record_id == "a")
+    assert bucket_record.mapping_reference.endswith("schema_mappings/Bucket")
+    assert bucket_record.payload["name"] == "b"
+    rel = request.relationships[0]
+    assert rel.source.record_id == "a"
+    assert rel.target.record_id == "s"
+    assert rel.relation_reference.endswith("/relations/inStore")
 
 
-def test_ingest_buckets_maps_bucket_and_store():
-    c = _FakeClient()
-    res = ingest_buckets(
+@pytest.mark.asyncio
+async def test_ingest_buckets_maps_bucket_and_store(ingest):
+    service, transport = ingest
+    res = await ingest_buckets(
         [
             {"name": "media-prod", "created": "2026-01-01T00:00:00Z", "location": "us"},
             {"name": "reports"},
@@ -137,29 +78,33 @@ def test_ingest_buckets_maps_bucket_and_store():
         store="minio",
         backend="s3",
         endpoint="http://minio.example:9000",
-        client=c,
+        ingest=service,
     )
     # 1 store node + 2 bucket nodes; 2 inStore edges
     assert res == {"nodes": 3, "edges": 2}
-    store_node = c.nodes.values["objectstore:store:minio"]
-    assert store_node["node_type"] == "ObjectStore"
-    assert store_node["backendType"] == "s3"
-    # native_ingest's governed PII scrubber redacts uri-shaped values.
-    assert store_node["endpoint"] == "[REDACTED_LOCATION]"
-    bucket_node = c.nodes.values["objectstore:bucket:minio/media-prod"]
-    assert bucket_node["node_type"] == "Bucket"
-    assert bucket_node["location"] == "us"
-    assert bucket_node["externalToolId"] == "minio/media-prod"
+    request = transport.requests[0]
+    records = {r.record_id: r for r in request.records}
+    store_record = records["objectstore:store:minio"]
+    assert store_record.mapping_reference.endswith("schema_mappings/ObjectStore")
+    assert store_record.payload["backendType"] == "s3"
+    bucket_record = records["objectstore:bucket:minio/media-prod"]
+    assert bucket_record.mapping_reference.endswith("schema_mappings/Bucket")
+    assert bucket_record.payload["location"] == "us"
+    assert bucket_record.payload["externalToolId"] == "minio/media-prod"
     assert (
         "objectstore:bucket:minio/media-prod",
         "objectstore:store:minio",
-        {"relationship": "inStore"},
-    ) in c.changes.edges
+    ) in {(r.source.record_id, r.target.record_id) for r in request.relationships}
+    assert all(
+        r.relation_reference.endswith("/relations/inStore")
+        for r in request.relationships
+    )
 
 
-def test_ingest_objects_maps_object_and_bucket():
-    c = _FakeClient()
-    res = ingest_objects(
+@pytest.mark.asyncio
+async def test_ingest_objects_maps_object_and_bucket(ingest):
+    service, transport = ingest
+    res = await ingest_objects(
         [
             {
                 "key": "logs/app.log",
@@ -172,31 +117,37 @@ def test_ingest_objects_maps_object_and_bucket():
         ],
         store="local",
         bucket="scratch",
-        client=c,
+        ingest=service,
     )
     # 1 bucket node + 1 object node; 1 inBucket edge
     assert res == {"nodes": 2, "edges": 1}
-    obj = c.nodes.values["objectstore:object:local/scratch/logs/app.log"]
-    assert obj["node_type"] == "Object"
-    assert obj["objectKey"] == "logs/app.log"
-    assert obj["byteSize"] == 1234
-    assert obj["contentType"] == "text/plain"
-    assert obj["storageClass"] == "STANDARD"
-    assert c.nodes.values["objectstore:bucket:local/scratch"]["node_type"] == "Bucket"
-    assert c.changes.edges == [
-        (
-            "objectstore:object:local/scratch/logs/app.log",
-            "objectstore:bucket:local/scratch",
-            {"relationship": "inBucket"},
-        )
-    ]
+    request = transport.requests[0]
+    records = {r.record_id: r for r in request.records}
+    obj = records["objectstore:object:local/scratch/logs/app.log"]
+    assert obj.mapping_reference.endswith("schema_mappings/Object")
+    assert obj.payload["objectKey"] == "logs/app.log"
+    assert obj.payload["byteSize"] == 1234
+    assert obj.payload["contentType"] == "text/plain"
+    assert obj.payload["storageClass"] == "STANDARD"
+    assert records["objectstore:bucket:local/scratch"].mapping_reference.endswith(
+        "schema_mappings/Bucket"
+    )
+    assert len(request.relationships) == 1
+    rel = request.relationships[0]
+    assert rel.source.record_id == "objectstore:object:local/scratch/logs/app.log"
+    assert rel.target.record_id == "objectstore:bucket:local/scratch"
+    assert rel.relation_reference.endswith("/relations/inBucket")
 
 
-def test_retired_structural_alias_is_rejected():
-    with pytest.raises(NativeIngestError, match="canonical node_type"):
-        ingest_entities([{"id": "a", "type": "Bucket"}], client=_FakeClient())
+@pytest.mark.asyncio
+async def test_retired_structural_alias_is_rejected(ingest):
+    service, _transport = ingest
+    with pytest.raises(IngestError, match="id and a node_type"):
+        await ingest_entities([{"id": "a", "type": "Bucket"}], ingest=service)
 
 
-def test_empty_native_ingest_is_rejected():
-    with pytest.raises(NativeIngestError, match="at least one entity"):
-        ingest_entities([], client=_FakeClient())
+@pytest.mark.asyncio
+async def test_empty_native_ingest_is_rejected(ingest):
+    service, _transport = ingest
+    with pytest.raises(IngestError, match="at least one entity"):
+        await ingest_entities([], ingest=service)
