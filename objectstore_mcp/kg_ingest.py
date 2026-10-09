@@ -3,10 +3,11 @@
 Object bytes remain in their authoritative backing store; only store, bucket, object,
 and storage metadata is materialized.
 
-All writes use the required ``agent_utilities.knowledge_graph.memory.native_ingest``
-primitive. Nodes use canonical ``node_type`` and edges use canonical ``relationship``;
-nodes and edges commit in one native transaction. Missing engine dependencies, rejected
-records, conflicts, and transaction failures propagate as ``NativeIngestError``.
+All writes use the ``agent_connector_sdk.ingest`` knowledge-ingest facade. Nodes use
+canonical ``node_type`` and edges use canonical ``relationship``; nodes and edges commit
+in one epistemic-graph transaction. Missing engine configuration, rejected records,
+checkpoint conflicts, and transaction failures propagate as ``IngestError`` (or a
+subclass).
 """
 
 from __future__ import annotations
@@ -14,8 +15,14 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from agent_utilities.knowledge_graph.memory.native_ingest import (
-    ingest_entities as _native_ingest_entities,
+from agent_connector_sdk.ingest import (
+    ChangeSet,
+    Entity,
+    IngestBinding,
+    IngestError,
+    KnowledgeIngest,
+    Relationship,
+    current_ingest,
 )
 
 logger = logging.getLogger("objectstore_mcp.kg")
@@ -23,25 +30,49 @@ logger = logging.getLogger("objectstore_mcp.kg")
 _SOURCE = "objectstore-mcp"
 _DOMAIN = "objectstore"
 
+_BINDING = IngestBinding(connector=_SOURCE, stream=_DOMAIN)
 
-def ingest_entities(
+
+def _to_entity(record: dict[str, Any]) -> Entity:
+    return Entity(
+        id=record.get("id"),
+        node_type=record.get("node_type"),
+        properties={
+            k: v for k, v in record.items() if k not in ("id", "node_type")
+        },
+    )
+
+
+def _to_relationship(record: dict[str, Any]) -> Relationship:
+    props = {
+        k: v
+        for k, v in record.items()
+        if k not in ("source", "target", "relationship")
+    }
+    return Relationship(
+        source=record["source"],
+        target=record["target"],
+        relationship=record["relationship"],
+        properties=props or None,
+    )
+
+
+async def ingest_entities(
     entities: list[dict[str, Any]],
     relationships: list[dict[str, Any]] | None = None,
     *,
-    source: str = _SOURCE,
-    domain: str = _DOMAIN,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
-    """Write canonical typed nodes and relationships in one native transaction."""
-    return _native_ingest_entities(
-        entities,
-        relationships,
-        source=source,
-        domain=domain,
-        client=client,
-        graph=graph,
+    """Write canonical typed nodes and relationships in one epistemic-graph commit."""
+    if not entities:
+        raise IngestError("ingest_entities needs at least one entity")
+    change_set = ChangeSet(
+        entities=tuple(_to_entity(e) for e in entities),
+        relationships=tuple(_to_relationship(r) for r in relationships or ()),
     )
+    service = ingest or current_ingest()
+    receipt = await service.submit(_BINDING, change_set)
+    return {"nodes": receipt.affected_count, "edges": receipt.relationship_count}
 
 
 def _store_id(store: str) -> str:
@@ -69,14 +100,13 @@ def _store_entity(
     }
 
 
-def ingest_buckets(
+async def ingest_buckets(
     buckets: list[dict[str, Any]],
     *,
     store: str,
     backend: str | None = None,
     endpoint: str | None = None,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map bucket records → ``:Bucket`` (+ owning ``:ObjectStore``) nodes and ingest.
 
@@ -108,16 +138,15 @@ def ingest_buckets(
         relationships.append(
             {"source": bid, "target": _store_id(store), "relationship": "inStore"}
         )
-    return ingest_entities(entities, relationships, client=client, graph=graph)
+    return await ingest_entities(entities, relationships, ingest=ingest)
 
 
-def ingest_objects(
+async def ingest_objects(
     objects: list[dict[str, Any]],
     *,
     store: str,
     bucket: str,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map object records → ``:Object`` nodes under a ``:Bucket`` and ingest.
 
@@ -159,7 +188,7 @@ def ingest_objects(
             }
         )
         relationships.append({"source": oid, "target": bid, "relationship": "inBucket"})
-    return ingest_entities(entities, relationships, client=client, graph=graph)
+    return await ingest_entities(entities, relationships, ingest=ingest)
 
 
 __all__ = ["ingest_entities", "ingest_buckets", "ingest_objects"]
