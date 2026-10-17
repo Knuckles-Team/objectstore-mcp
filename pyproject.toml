@@ -1,5 +1,5 @@
 [build-system]
-requires = [ "setuptools>=80.9.0", "wheel",]
+requires = [ "setuptools>=84.0.0", "wheel",]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,7 +9,7 @@ description = "Object storage (S3/MinIO/R2, Google Cloud Storage, Azure Blob, lo
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "agent-connector-sdk>=0.2.0,<1.0.0", "python-dotenv>=1.2.2",]
+dependencies = [ "agent-connector-sdk>=0.2.0,<1.0.0", "python-dotenv>=1.2.4",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -24,12 +24,12 @@ s3 = [
     # floor: lighteval (pulled in via data-science-mcp[eval]) transitively
     # pins aioboto3, whose aiobotocore matrix only admits older boto3 ranges;
     # the pre-bump floor is the ecosystem-compatible one.
-    "boto3>=1.34.0",
+    "boto3>=1.43.114",
 ]
-gcs = [ "google-cloud-storage>=3.13.0",]
-azure = [ "azure-storage-blob>=12.30.0",]
-all = [ "objectstore-mcp[mcp,s3,gcs,azure]>=1.0.0",]
-test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0", "moto[s3]>=5.2.2",]
+gcs = [ "google-cloud-storage>=3.17.1",]
+azure = [ "azure-storage-blob>=12.31.0",]
+all = [ "objectstore-mcp[mcp,s3,gcs,azure]>=1.0.1",]
+test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0", "moto[s3]>=5.2.4",]
 
 [project.scripts]
 objectstore-mcp = "objectstore_mcp.mcp_server:mcp_server"
@@ -51,7 +51,7 @@ include-package-data = true
 
 [tool.uv]
 override-dependencies = [
-    "fastmcp-slim[client,server]>=4.0.0b1",
+    "fastmcp-slim[client,server]>=4.1.0",
 ]
 
 [tool.ruff]
