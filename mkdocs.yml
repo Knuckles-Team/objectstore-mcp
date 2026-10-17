@@ -1,5 +1,5 @@
 site_name: "objectstore-mcp"
-site_description: "Object storage API + MCP Server + A2A Agent — S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a zero-infra local filesystem backend for the agent-utilities ecosystem."
+site_description: "Object storage API + MCP Server + A2A Agent — S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a zero-infra local filesystem backend for the agent-connector-sdk ecosystem."
 site_url: "https://knuckles-team.github.io/objectstore-mcp/"
 repo_name: "Knuckles-Team/objectstore-mcp"
 repo_url: "https://github.com/Knuckles-Team/objectstore-mcp"

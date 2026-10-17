@@ -65,7 +65,6 @@ Store the real remote URL, outbound identity reference, and TLS-profile referenc
 This page covers running `objectstore-mcp` as long-lived servers.
 
 > `objectstore-mcp` ships both an **MCP server** (console script
-> `objectstore-mcp`) and an **A2A agent server** (console script
 > `objectstore-agent`).
 
 ## Run the MCP server
@@ -98,7 +97,6 @@ curl -s http://localhost:8000/health        # {"status":"OK"}
 
 ```bash
 docker compose -f docker/mcp.compose.yml up -d      # MCP server only
-docker compose -f docker/agent.compose.yml up -d    # MCP + agent
 ```
 
 Stores, limits, and toggles come from `../.env` (see

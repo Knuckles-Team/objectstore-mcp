@@ -27,18 +27,20 @@ _BACKEND_CACHE: dict[str, ObjectStoreBackend] = {}
 def entitled_store_names(names: list[str]) -> list[str]:
     """Filter a store-name list to what the calling identity may reach.
 
-    Routes the names through agent-utilities' shared identity-scoped resolver
-    (CONCEPT:AU-OS.identity.identity-scoped-resource-autoload): a caller's
-    Okta/Keycloak groups decide which named object stores auto-load for them.
-    The ambient ``SYSTEM_ACTOR`` (unauthenticated/local) holds ``admin`` → sees
-    all, so behaviour is unchanged until a real identity scopes it down.
-    Degrades to the full list if agent-utilities predates the resolver.
+    Routes the names through ``agent_connector_sdk.entitlements``' identity-scoped
+    resolver: a bound actor's roles/groups decide which named object stores
+    auto-load for them, and an unauthenticated or tenant-less bound actor fails
+    closed (``PermissionError``). When no actor is bound at all (local stdio use)
+    every configured store is visible, as before.
     """
+    from agent_connector_sdk.entitlements import identity_scoped_resources
+    from agent_connector_sdk.identity import IdentityRequiredError, current_actor
+
     try:
-        from agent_utilities.security.entitlements import identity_scoped_resources
-    except Exception:
+        actor = current_actor()
+    except IdentityRequiredError:
         return list(names)
-    return list(identity_scoped_resources("objectstore", names))
+    return list(identity_scoped_resources("objectstore", names, actor=actor))
 
 
 def resolve_store(store: str | None = None) -> StoreConfig:
