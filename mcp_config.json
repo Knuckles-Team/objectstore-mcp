@@ -7,7 +7,6 @@
         "objectstore-mcp"
       ],
       "env": {
-        "MCP_TOOL_MODE": "intent",
         "OBJECTSTORETOOL": "True",
         "OBJECTSTORE_ALLOW_BUCKET_DELETE": "false",
         "OBJECTSTORE_ALLOW_DELETE": "true",
