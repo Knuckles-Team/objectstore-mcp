@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Object storage API + MCP Server + A2A Agent — S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a zero-infra local filesystem backend for the agent-utilities ecosystem.">
+        <meta name="description" content="Object storage API + MCP Server + A2A Agent — S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a zero-infra local filesystem backend for the agent-connector-sdk ecosystem.">
       
       
       
@@ -1050,7 +1050,6 @@ the image remains immutable and contains no environment connection profile.</p>
 <p>This page covers running <code>objectstore-mcp</code> as long-lived servers.</p>
 <blockquote>
 <p><code>objectstore-mcp</code> ships both an <strong>MCP server</strong> (console script
-<code>objectstore-mcp</code>) and an <strong>A2A agent server</strong> (console script
 <code>objectstore-agent</code>).</p>
 </blockquote>
 <h2 id="run-the-mcp-server">Run the MCP server<a class="headerlink" href="#run-the-mcp-server" title="Permanent link">&para;</a></h2>
@@ -1075,7 +1074,6 @@ the image remains immutable and contains no environment connection profile.</p>
 </span></code></pre></div>
 <h2 id="docker-compose">Docker Compose<a class="headerlink" href="#docker-compose" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker/mcp.compose.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w">      </span><span class="c1"># MCP server only</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker/agent.compose.yml<span class="w"> </span>up<span class="w"> </span>-d<span class="w">    </span><span class="c1"># MCP + agent</span>
 </span></code></pre></div>
 <p>Stores, limits, and toggles come from <code>../.env</code> (see
 <a href="https://github.com/Knuckles-Team/objectstore-mcp/blob/main/.env.example"><code>.env.example</code></a>).</p>
