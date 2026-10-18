@@ -4,7 +4,9 @@
     "server": "objectstore-mcp",
     "tool": "objects",
     "action": "list",
-    "params": { "action": "list" },
+    "params": {
+      "action": "list"
+    },
     "records_path": "objects",
     "id_field": "key",
     "title_field": "key",
