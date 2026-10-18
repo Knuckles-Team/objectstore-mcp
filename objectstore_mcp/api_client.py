@@ -17,7 +17,7 @@ from objectstore_mcp.api import (
     create_backend,
 )
 
-__version__ = "2.3.1"
+__version__ = "2.3.2"
 
 __all__ = [
     "BACKEND_ALIASES",
