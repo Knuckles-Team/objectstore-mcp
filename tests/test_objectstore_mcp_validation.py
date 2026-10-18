@@ -38,7 +38,7 @@ async def call(mcp, tool, action, params=None, store=None):
 async def test_tool_inventory(mcp):
     async with Client(mcp) as client:
         tools = {t.name for t in await client.list_tools()}
-    assert tools == {"objects", "buckets", "transfer"}
+    assert tools == {"objects", "buckets", "transfer", "objectstore_ingest"}
 
 
 async def test_bucket_lifecycle(mcp):

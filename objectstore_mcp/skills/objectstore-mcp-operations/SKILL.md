@@ -2,12 +2,12 @@
 name: objectstore-mcp-operations
 skill_type: skill
 description: >-
-  Operate objectstore-mcp through its governed MCP and GraphOS capabilities, including objectstore bucket administration, objectstore data transfer, objectstore object operations. Use when a request requires this provider's read, change, automation, ingestion, troubleshooting, or evidence workflows.
+  Operate objectstore-mcp through its governed MCP and Arbora capabilities, including objectstore bucket administration, objectstore data transfer, objectstore object operations. Use when a request requires this provider's read, change, automation, ingestion, troubleshooting, or evidence workflows.
 ---
 
 # Objectstore Mcp Operations
 
-Use the provider's governed MCP tools through GraphOS delegation.
+Use the provider's governed MCP tools through Arbora delegation.
 
 ## Workflow
 

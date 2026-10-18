@@ -1,6 +1,6 @@
 # objectstore-mcp
 
-The object-storage connector for the agent-utilities fleet: one MCP tool
+The object-storage connector for the agent-connector-sdk fleet: one MCP tool
 surface (`objects` / `buckets` / `transfer`) over S3 and S3-compatible stores
 (MinIO, Cloudflare R2), Google Cloud Storage, Azure Blob Storage, and a
 zero-infra local-filesystem backend.

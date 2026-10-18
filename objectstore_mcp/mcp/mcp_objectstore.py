@@ -529,7 +529,9 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
                 bucket, prefix=p.get("prefix", ""), max_keys=max_keys
             )
             object_dicts = [o.to_dict() for o in page.objects]
-            result = await ingest_objects(object_dicts, store=config.name, bucket=bucket)
+            result = await ingest_objects(
+                object_dicts, store=config.name, bucket=bucket
+            )
             return {
                 "store": config.name,
                 "bucket": bucket,

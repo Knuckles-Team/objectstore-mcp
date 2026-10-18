@@ -10,13 +10,12 @@
   - `mcp/mcp_objectstore.py`: The action-routed tool surface and the **only**
     place safety policy (caps, remove flags, dry-run) is enforced
   - `config.py` / `auth.py`: Named-store registry, backend cache, and `get_client()`
-  - `agent_server.py`: Pydantic-AI A2A agent server (console script `objectstore-agent`)
 - `tests/`: Test suite (`test_backend_conformance.py` is the protocol contract)
 - `docs/`: Architecture, usage, and the `CONCEPT:OBJ-*` registry
 
 ## Tech Stack
 - Python 3.11+
-- agent-utilities >= 0.47.0 (create_mcp_server / FastMCP)
+- agent-connector-sdk >= 0.47.0 (create_mcp_server / FastMCP)
 - Optional provider SDKs via extras: `s3` (boto3), `gcs`
   (google-cloud-storage), `azure` (azure-storage-blob); the core install is
   filesystem-only with zero cloud dependencies
@@ -146,10 +145,10 @@ alone).
 Working in parallel with other sessions/worktrees? **Reserve a concept id before you write its `CONCEPT:` marker** so two sessions never collide:
 
 ```bash
-agent-utilities --json concept reserve --ns EG-KG.compute.backend   # or a package prefix, e.g. KEY
+agent-connector-sdk --json concept reserve --ns EG-KG.compute.backend   # or a package prefix, e.g. KEY
 ```
 
-Full protocol (ledger, merge=union, reconcile, MCP/REST): <https://knuckles-team.github.io/agent-utilities/concept_coordination/>
+Full protocol (ledger, merge=union, reconcile, MCP/REST): <https://knuckles-team.github.io/agent-connector-sdk/concept_coordination/>
 <!-- END concept-coordination (generated) -->
 
 ## Version & lockfile drift edict (keep the version mirrors AND the lock in sync)
@@ -177,14 +176,14 @@ is what Dependabot flags. Rules:
 ## Upstream currency edict — target the newest release; a pin is a hypothesis, not a fact (READ BEFORE capping, deferring, or opt-in-gating an upgrade)
 
 This governs how this repository treat **other people's** releases, deprecations, and version caps in
-this repo (fleet-wide edict, propagated from `agent-utilities/AGENTS.md`).
+this repo (fleet-wide edict, propagated from `agent-connector-sdk/AGENTS.md`).
 
 1. **Latest by default.** Target the newest upstream release -- including a pre-release
    where the ecosystem has already moved onto it. Sitting on an old major because the
    upgrade is work is not a reason to defer it.
 2. **A conservative upstream pin is a hypothesis, not a fact -- test it, don't inherit
    it.** Upstream maintainers cap defensively (an unreleased major, an untested surface)
-   as often as they cap for a known break. Worked example (from `agent-utilities`):
+   as often as they cap for a known break. Worked example (from `agent-connector-sdk`):
    `pydantic-ai-slim` 2.18.0 declared `fastmcp-slim[client]>=3.3.0` with no upper bound;
    2.19.0 added `<4` purely as a defensive guard while fastmcp 4 was still pre-release --
    not because of an observed incompatibility. Blocking an upgrade on that kind of cap
