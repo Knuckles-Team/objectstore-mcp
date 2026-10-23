@@ -9,7 +9,7 @@ import importlib
 import inspect
 from typing import Any
 
-__version__ = "2.3.3"
+__version__ = "2.3.4"
 __all__: list[str] = []
 
 CORE_MODULES = ["objectstore_mcp.api_client"]

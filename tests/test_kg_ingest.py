@@ -61,12 +61,12 @@ async def test_ingest_entities_writes_nodes_and_edges(ingest):
     request = transport.requests[0]
     assert {r.record_id for r in request.records} == {"a", "s"}
     bucket_record = next(r for r in request.records if r.record_id == "a")
-    assert bucket_record.mapping_reference.endswith("schema_mappings/Bucket")
+    assert bucket_record.mapping_reference.endswith("mappings/Bucket")
     assert bucket_record.payload["name"] == "b"
     rel = request.relationships[0]
     assert rel.source.record_id == "a"
     assert rel.target.record_id == "s"
-    assert rel.relation_reference.endswith("/relations/inStore")
+    assert rel.relation_reference.endswith("/inStore")
 
 
 @pytest.mark.asyncio
@@ -87,10 +87,10 @@ async def test_ingest_buckets_maps_bucket_and_store(ingest):
     request = transport.requests[0]
     records = {r.record_id: r for r in request.records}
     store_record = records["objectstore:store:minio"]
-    assert store_record.mapping_reference.endswith("schema_mappings/ObjectStore")
+    assert store_record.mapping_reference.endswith("mappings/ObjectStore")
     assert store_record.payload["backendType"] == "s3"
     bucket_record = records["objectstore:bucket:minio/media-prod"]
-    assert bucket_record.mapping_reference.endswith("schema_mappings/Bucket")
+    assert bucket_record.mapping_reference.endswith("mappings/Bucket")
     assert bucket_record.payload["location"] == "us"
     assert bucket_record.payload["externalToolId"] == "minio/media-prod"
     assert (
@@ -98,7 +98,7 @@ async def test_ingest_buckets_maps_bucket_and_store(ingest):
         "objectstore:store:minio",
     ) in {(r.source.record_id, r.target.record_id) for r in request.relationships}
     assert all(
-        r.relation_reference.endswith("/relations/inStore")
+        r.relation_reference.endswith("/inStore")
         for r in request.relationships
     )
 
@@ -126,19 +126,19 @@ async def test_ingest_objects_maps_object_and_bucket(ingest):
     request = transport.requests[0]
     records = {r.record_id: r for r in request.records}
     obj = records["objectstore:object:local/scratch/logs/app.log"]
-    assert obj.mapping_reference.endswith("schema_mappings/Object")
+    assert obj.mapping_reference.endswith("mappings/Object")
     assert obj.payload["objectKey"] == "logs/app.log"
     assert obj.payload["byteSize"] == 1234
     assert obj.payload["contentType"] == "text/plain"
     assert obj.payload["storageClass"] == "STANDARD"
     assert records["objectstore:bucket:local/scratch"].mapping_reference.endswith(
-        "schema_mappings/Bucket"
+        "mappings/Bucket"
     )
     assert len(request.relationships) == 1
     rel = request.relationships[0]
     assert rel.source.record_id == "objectstore:object:local/scratch/logs/app.log"
     assert rel.target.record_id == "objectstore:bucket:local/scratch"
-    assert rel.relation_reference.endswith("/relations/inBucket")
+    assert rel.relation_reference.endswith("/inBucket")
 
 
 @pytest.mark.asyncio
