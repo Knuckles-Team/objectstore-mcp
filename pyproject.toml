@@ -9,7 +9,7 @@ description = "Object storage (S3/MinIO/R2, Google Cloud Storage, Azure Blob, lo
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12"
-dependencies = [ "agent-connector-sdk[mcp]>=0.3.5,<1.0.0", "python-dotenv>=1.2.4",]
+dependencies = [ "agent-connector-sdk[mcp]>=0.3.18,<1.0.0", "python-dotenv>=1.2.4",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -18,7 +18,7 @@ email = "maintainers@users.noreply.github.com"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.5,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.18,<1.0.0",]
 s3 = [
     # CONCEPT:PHASE2-RECONCILE — relaxed off the modernize-bump's 1.43.52
     # floor: lighteval (pulled in via data-science-mcp[eval]) transitively
@@ -42,6 +42,10 @@ objectstore-mcp = "objectstore_mcp.ontology"
 
 [project.entry-points."agent_connector_sdk.source_connector_providers"]
 objectstore-mcp = "objectstore_mcp.connectors"
+
+# The one declared connector identity: the fleet name (SDK-CONNECTOR-CONTROL-R071).
+[project.entry-points."agent_connector_sdk.connector"]
+objectstore-mcp = "objectstore_mcp"
 
 [tool.uv.workspace]
 members = ["."]
