@@ -5,55 +5,16 @@ stores (MinIO, Cloudflare R2), Google Cloud Storage, Azure Blob Storage, and
 a zero-infra local-filesystem backend (CONCEPT:OB-OS.governance.every-provider-implements-same).
 """
 
-import importlib
-import inspect
-from typing import Any
+from agent_connector_sdk.connector import Connector
 
-__version__ = "2.3.4"
-__all__: list[str] = []
+from objectstore_mcp.api import ObjectStoreBackend
+from objectstore_mcp.auth import get_client
 
-CORE_MODULES = ["objectstore_mcp.api_client"]
-OPTIONAL_MODULES = {
-    "objectstore_mcp.mcp_server": "mcp",
-}
+connector = Connector(
+    api=ObjectStoreBackend,
+    get_client=get_client,
+    tools="objectstore_mcp.mcp_server",
+    instructions="Object-storage MCP server - one tool surface over S3 and S3-compatible stores (MinIO/R2), Google Cloud Storage, Azure Blob, and a zero-infra local-filesystem backend. Tools: 'objects' (list/head/get/put/copy/move/delete/presign/metadata), 'buckets' (list/create/delete/exists/info/stores), 'transfer' (upload/download, single or by prefix). Named stores come from OBJECTSTORE_STORES; the 'local' filesystem store always exists.",
+)
 
-
-def _expose_members(module):
-    for name, obj in inspect.getmembers(module):
-        if (inspect.isclass(obj) or inspect.isfunction(obj)) and not name.startswith(
-            "_"
-        ):
-            globals()[name] = obj
-            if name not in __all__:
-                __all__.append(name)
-
-
-for module_name in CORE_MODULES:
-    module = importlib.import_module(module_name)
-    _expose_members(module)
-
-_loaded_optional_modules: dict = {}
-
-
-def _import_module_safely(module_name: str):
-    try:
-        return importlib.import_module(module_name)
-    except ImportError:
-        return None
-
-
-def __getattr__(name: str) -> Any:
-    if name == "_MCP_AVAILABLE":
-        mcp_key = next((k for k in OPTIONAL_MODULES if "mcp_server" in k), None)
-        return _import_module_safely(mcp_key) is not None if mcp_key else False
-
-    for module_name in OPTIONAL_MODULES:
-        if module_name not in _loaded_optional_modules:
-            module = _import_module_safely(module_name)
-            _loaded_optional_modules[module_name] = module
-            if module is not None:
-                _expose_members(module)
-        module = _loaded_optional_modules[module_name]
-        if module is not None and hasattr(module, name):
-            return getattr(module, name)
-    raise AttributeError(f"module 'objectstore_mcp' has no attribute {name!r}")
+__all__ = ["connector"]

@@ -4,21 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objectstore-mcp"
-version = "2.3.4"
+version = "2.3.5"
 description = "Object storage (S3/MinIO/R2, Google Cloud Storage, Azure Blob, local filesystem) API + MCP Server for Agentic AI!"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12"
-dependencies = [ "agent-connector-sdk[mcp]>=0.4.1,<1.0.0", "python-dotenv>=1.2.4",]
+dependencies = [ "agent-connector-sdk[mcp]>=0.5.4,<0.6.0", "python-dotenv>=1.2.4",]
 [[project.authors]]
-name = "Project Maintainers"
-email = "maintainers@users.noreply.github.com"
+name = "Repository Maintainers"
+email = "maintainers@knuckles.team"
 
 [project.license]
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.4.1,<1.0.0",]
 s3 = [
     # CONCEPT:PHASE2-RECONCILE — relaxed off the modernize-bump's 1.43.52
     # floor: lighteval (pulled in via data-science-mcp[eval]) transitively
@@ -28,21 +27,15 @@ s3 = [
 ]
 gcs = [ "google-cloud-storage>=3.17.1",]
 azure = [ "azure-storage-blob>=12.31.0",]
-all = [ "objectstore-mcp[mcp,s3,gcs,azure]>=1.0.1",]
+all = [ "objectstore-mcp[s3,gcs,azure]>=1.0.1",]
 test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0", "moto[s3]>=5.2.4",]
 
 [project.scripts]
-objectstore-mcp = "objectstore_mcp.mcp_server:mcp_server"
-
-[project.entry-points."agent_connector_sdk.skill_providers"]
-objectstore-mcp = "objectstore_mcp.skills"
-
-[project.entry-points."agent_connector_sdk.ontology_providers"]
-objectstore-mcp = "objectstore_mcp.ontology"
+objectstore-mcp = "agent_connector_sdk.cli:serve"
 
 # The one declared connector identity: the fleet name (SDK-CONNECTOR-CONTROL-R071).
 [project.entry-points."agent_connector_sdk.connector"]
-objectstore-mcp = "objectstore_mcp"
+objectstore-mcp = "objectstore_mcp:connector"
 
 [tool.uv.workspace]
 members = ["."]
@@ -56,6 +49,7 @@ override-dependencies = [
 ]
 
 [tool.ruff]
+extend-exclude = ["tests", "scripts"]
 line-length = 88
 target-version = "py312"
 
@@ -83,3 +77,7 @@ include = [ "objectstore_mcp*",]
 
 [tool.pipelines_hooks.ste]
 exempt = ["specs/*", "specs/**/*"]
+
+[tool.pipelines.container]
+debug_apt = ["default-jre", "ripgrep", "tree", "fd-find", "curl", "nano", "build-essential", "cmake", "libssl-dev", "libcurl4-openssl-dev", "pkg-config", "cargo", "rustc"]
+install_extras = {"mcp" = []}

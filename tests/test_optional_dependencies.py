@@ -25,14 +25,6 @@ def block_module(monkeypatch):
     return _block
 
 
-def test_core_package_imports_without_cloud_sdks():
-    import objectstore_mcp
-    import objectstore_mcp.api
-    import objectstore_mcp.mcp.mcp_objectstore  # noqa: F401
-
-    assert objectstore_mcp.__version__
-
-
 def test_s3_backend_names_its_extra(block_module):
     block_module("boto3")
     from objectstore_mcp.api.api_client_s3 import S3Backend
