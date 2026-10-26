@@ -18,3 +18,6 @@ connector multiplexes named stores (`OBJECTSTORE_STORES`) across providers
 behind a single, safety-governed tool surface — and because the filesystem
 backend implements the same protocol, everything works on a laptop with no
 cloud credentials.
+
+The generated [spec-delivery dashboard](spec-delivery/) records the connector's
+current delivery contracts and source status.
