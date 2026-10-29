@@ -24,9 +24,9 @@ class _FakeTransport:
         self.requests: list[Any] = []
 
     async def source_status(self, connector: str, stream: str) -> Any:
-
-        del connector, stream
-        return SimpleNamespace(accepted_checkpoint=None)
+        return SimpleNamespace(
+            connector=connector, stream=stream, accepted_checkpoint=None
+        )
 
     async def submit(self, request: Any) -> Any:
         self.requests.append(request)
@@ -97,10 +97,7 @@ async def test_ingest_buckets_maps_bucket_and_store(ingest):
         "objectstore:bucket:minio/media-prod",
         "objectstore:store:minio",
     ) in {(r.source.record_id, r.target.record_id) for r in request.relationships}
-    assert all(
-        r.relation_reference.endswith("/inStore")
-        for r in request.relationships
-    )
+    assert all(r.relation_reference.endswith("/inStore") for r in request.relationships)
 
 
 @pytest.mark.asyncio
