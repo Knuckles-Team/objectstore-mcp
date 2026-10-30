@@ -13,3 +13,4 @@ Read the existing specs first. Extend the spec that owns the behavior. Create a 
 ## Local specifications
 
 - [`CONN-OBJECTSTORE-MCP-CONNECTOR-CONTENT`](connector-content/spec.md) — The connector serves its packaged content.
+- [`CONN-OBJECTSTORE-MCP-DATA-PLATFORM-OPERATIONS`](data-platform-operations/spec.md) — Operations the data-platform vocabulary needs.
