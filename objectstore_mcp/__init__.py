@@ -5,7 +5,7 @@ stores (MinIO, Cloudflare R2), Google Cloud Storage, Azure Blob Storage, and
 a zero-infra local-filesystem backend (CONCEPT:OB-OS.governance.every-provider-implements-same).
 """
 
-from agent_connector_sdk.connector import Connector
+from scion_sdk.connector import Connector
 
 from objectstore_mcp.api import ObjectStoreBackend
 from objectstore_mcp.auth import get_client

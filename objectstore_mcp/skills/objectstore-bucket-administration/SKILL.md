@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [objectstore, buckets, containers, stores, admin, mcp]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 # ObjectStore Bucket Administration

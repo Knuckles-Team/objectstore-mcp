@@ -27,14 +27,14 @@ _BACKEND_CACHE: dict[str, ObjectStoreBackend] = {}
 def entitled_store_names(names: list[str]) -> list[str]:
     """Filter a store-name list to what the calling identity may reach.
 
-    Routes the names through ``agent_connector_sdk.entitlements``' identity-scoped
+    Routes the names through ``scion_sdk.entitlements``' identity-scoped
     resolver: a bound actor's roles/groups decide which named object stores
     auto-load for them, and an unauthenticated or tenant-less bound actor fails
     closed (``PermissionError``). When no actor is bound at all (local stdio use)
     every configured store is visible, as before.
     """
-    from agent_connector_sdk.entitlements import identity_scoped_resources
-    from agent_connector_sdk.identity import IdentityRequiredError, current_actor
+    from scion_sdk.entitlements import identity_scoped_resources
+    from scion_sdk.identity import IdentityRequiredError, current_actor
 
     try:
         actor = current_actor()

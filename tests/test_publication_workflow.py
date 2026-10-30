@@ -55,7 +55,7 @@ def test_development_skill_has_real_delivery_contract_and_actual_tests():
         "OBJECTSTORE_DEFAULT_STORE",
         "OBJECTSTORE_FS_ROOT",
         "ObjectStoreBackend",
-        "agent-connector-sdk",
+        "scion-sdk",
         "condensed/verbose",
     ):
         assert runtime_name in content

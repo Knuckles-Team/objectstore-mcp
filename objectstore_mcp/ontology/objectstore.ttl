@@ -114,5 +114,5 @@
     rdfs:comment """Object-storage model — named stores, buckets/containers, and the
     objects they hold with their size/etag/content-type/storage-class metadata — across
     S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a local filesystem backend,
-    federated into the agent-connector-sdk knowledge-graph hub. Captures object METADATA
+    federated into the scion-sdk knowledge-graph hub. Captures object METADATA
     only; object bytes stay in the backing store (or a separately-linked :Blob).""" .

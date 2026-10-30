@@ -10,7 +10,7 @@ license: MIT
 tags: [objectstore, development, connector, test, gates]
 tier: repository
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 
@@ -19,7 +19,7 @@ metadata:
 This repository owns the object-storage backends, safety-governed action-routed
 MCP tools, connector content, and source declarations for S3-compatible stores,
 GCS, Azure Blob, and the local filesystem backend. Shared MCP contracts,
-transports, and source-ingest clients belong to `agent-connector-sdk`;
+transports, and source-ingest clients belong to `scion-sdk`;
 admission, serving, and durable graph state belong to their owning repositories.
 Read `AGENTS.md` before changing code. Keep credentials, customer objects,
 private endpoints, bucket names, and raw object data out of source, logs,
