@@ -3,7 +3,7 @@
 Object bytes remain in their authoritative backing store; only store, bucket, object,
 and storage metadata is materialized.
 
-All writes use the ``agent_connector_sdk.ingest`` knowledge-ingest facade. Nodes use
+All writes use the ``scion_sdk.ingest`` knowledge-ingest facade. Nodes use
 canonical ``node_type`` and edges use canonical ``relationship``; nodes and edges commit
 in one epistemic-graph transaction. Missing engine configuration, rejected records,
 checkpoint conflicts, and transaction failures propagate as ``IngestError`` (or a
@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from agent_connector_sdk.ingest import (
+from scion_sdk.ingest import (
     ChangeSet,
     Entity,
     IngestBinding,

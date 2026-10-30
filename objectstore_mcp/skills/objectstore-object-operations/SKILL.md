@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [objectstore, s3, gcs, azure-blob, minio, objects, mcp]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 # ObjectStore Object Operations

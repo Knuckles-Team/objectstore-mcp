@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [objectstore, transfer, upload, download, backup, mcp]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 # ObjectStore Data Transfer

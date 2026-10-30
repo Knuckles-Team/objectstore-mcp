@@ -3,7 +3,7 @@
 The caller's entitled object stores auto-load; a non-entitled named store is
 denied; the default falls to the first entitled when the configured default is
 off-limits. Tests the resolution/enforcement logic with the entitlement source
-mocked (the resolver itself is tested in agent-connector-sdk).
+mocked (the resolver itself is tested in scion-sdk).
 """
 
 import json
@@ -66,7 +66,7 @@ def test_unknown_store_name_still_raises_unknown(monkeypatch):
 
 
 def _actor(*roles, authenticated=True, tenant="t1"):
-    from agent_connector_sdk.identity import ActorContext, ActorType
+    from scion_sdk.identity import ActorContext, ActorType
 
     return ActorContext(
         actor_id="u1",
@@ -82,14 +82,14 @@ def test_no_bound_actor_sees_every_store():
 
 
 def test_bound_actor_is_scoped_to_entitled_stores():
-    from agent_connector_sdk.identity import use_actor
+    from scion_sdk.identity import use_actor
 
     with use_actor(_actor("objectstore:dev")):
         assert auth.entitled_store_names(["prod", "dev"]) == ["dev"]
 
 
 def test_unauthenticated_bound_actor_fails_closed():
-    from agent_connector_sdk.identity import use_actor
+    from scion_sdk.identity import use_actor
 
     with use_actor(_actor("objectstore:dev", authenticated=False)):
         with pytest.raises(PermissionError):
