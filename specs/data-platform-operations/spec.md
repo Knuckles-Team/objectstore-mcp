@@ -1,6 +1,6 @@
 # CONN-OBJECTSTORE-MCP-DATA-PLATFORM-OPERATIONS — Operations the data-platform vocabulary needs
 
-Owner: objectstore-mcp. Cross-repo IDs: `EG-DATAPLAT-VOCAB-R009`.
+Owner: objectstore-mcp. Cross-repo IDs: `MEDULLA-DATAPLAT-VOCAB-R009`.
 
 ## Purpose and user stories
 
