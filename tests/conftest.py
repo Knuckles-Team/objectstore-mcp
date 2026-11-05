@@ -1,9 +1,9 @@
 """Shared fixtures: isolated filesystem stores and clean env/caches."""
 
 import pytest
+from scion_sdk.storage import FilesystemBackend
 
 from objectstore_mcp.auth import reset_backend_cache
-from objectstore_mcp.api.api_client_filesystem import FilesystemBackend
 
 ENV_VARS = [
     "OBJECTSTORE_STORES",

@@ -3,14 +3,16 @@
 Stores
 ------
 ``OBJECTSTORE_STORES`` is a JSON object mapping store names to per-store
-settings::
+settings, parsed by the SDK store registry (SCION-CENTRALIZED-CAPABILITIES-R042.6).
+Secrets are references only::
 
     {
-      "media":   {"backend": "s3", "bucket": "media-prod", "profile": "prod"},
-      "minio":   {"backend": "s3", "endpoint": "https://minio.example"},
-      "reports": {"backend": "gcs", "bucket": "acme-reports"},
-      "archive": {"backend": "azure", "bucket": "archive"},
-      "scratch": {"backend": "filesystem", "root": "~/scratch-store"}
+      "media":   {"backend": "s3", "endpoint": "https://objects.example", "bucket": "media",
+                  "credentials": {"access_key_id": "env://MEDIA_KEY_ID",
+                                  "secret_access_key": "openbao://kv/media#secret"}},
+      "share":   {"backend": "webdav", "endpoint": "https://files.example/dav/files/svc",
+                  "credentials": {"username": "env://SHARE_USER", "password": "env://SHARE_PASS"}},
+      "scratch": {"backend": "filesystem", "root": "/srv/scratch-store"}
     }
 
 A zero-infra ``local`` filesystem store (rooted at ``OBJECTSTORE_FS_ROOT``,
@@ -27,8 +29,19 @@ defaults; the tool layer enforces them uniformly across all backends.
 
 import json
 import os
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
+
+from scion_sdk.storage import StoreConfig, parse_stores
+
+__all__ = [
+    "DEFAULT_FS_ROOT",
+    "LOCAL_STORE_NAME",
+    "Limits",
+    "StoreConfig",
+    "default_store_name",
+    "load_limits",
+    "load_stores",
+]
 
 DEFAULT_FS_ROOT = "~/.local/share/objectstore-mcp"
 LOCAL_STORE_NAME = "local"
@@ -49,22 +62,6 @@ def _as_int(name: str, raw: str | None, default: int) -> int:
         return int(raw)
     except ValueError as exc:
         raise ValueError(f"{name} must be an integer (got {raw!r}).") from exc
-
-
-@dataclass(frozen=True)
-class StoreConfig:
-    """One named store: a backend plus its connection/default settings."""
-
-    name: str
-    backend: str
-    bucket: str | None = None
-    endpoint: str | None = None
-    profile: str | None = None
-    region: str | None = None
-    root: str | None = None
-    project: str | None = None
-    connection_string: str | None = None
-    options: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -115,41 +112,6 @@ def load_limits() -> Limits:
     )
 
 
-_KNOWN_FIELDS = {
-    "backend",
-    "bucket",
-    "endpoint",
-    "profile",
-    "region",
-    "root",
-    "project",
-    "connection_string",
-}
-
-
-def _parse_store(name: str, raw: Any) -> StoreConfig:
-    if not isinstance(raw, dict):
-        raise ValueError(
-            f"OBJECTSTORE_STORES[{name!r}] must be a JSON object (got {raw!r})."
-        )
-    backend = raw.get("backend")
-    if not backend or not isinstance(backend, str):
-        raise ValueError(f"OBJECTSTORE_STORES[{name!r}] is missing 'backend'.")
-    options = {k: v for k, v in raw.items() if k not in _KNOWN_FIELDS}
-    return StoreConfig(
-        name=name,
-        backend=backend.lower(),
-        bucket=raw.get("bucket"),
-        endpoint=raw.get("endpoint"),
-        profile=raw.get("profile"),
-        region=raw.get("region"),
-        root=raw.get("root"),
-        project=raw.get("project"),
-        connection_string=raw.get("connection_string"),
-        options=options,
-    )
-
-
 def load_stores() -> dict[str, StoreConfig]:
     """Parse ``OBJECTSTORE_STORES`` and guarantee the ``local`` store exists."""
     raw = os.getenv("OBJECTSTORE_STORES", "").strip()
@@ -163,13 +125,11 @@ def load_stores() -> dict[str, StoreConfig]:
             ) from exc
         if not isinstance(parsed, dict):
             raise ValueError("OBJECTSTORE_STORES must be a JSON object.")
-        for name, entry in parsed.items():
-            stores[name] = _parse_store(name, entry)
+        stores.update(parse_stores(parsed))
     if LOCAL_STORE_NAME not in stores:
+        root = os.path.expanduser(os.getenv("OBJECTSTORE_FS_ROOT", DEFAULT_FS_ROOT))
         stores[LOCAL_STORE_NAME] = StoreConfig(
-            name=LOCAL_STORE_NAME,
-            backend="filesystem",
-            root=os.getenv("OBJECTSTORE_FS_ROOT", DEFAULT_FS_ROOT),
+            name=LOCAL_STORE_NAME, backend="filesystem", root=root
         )
     return stores
 

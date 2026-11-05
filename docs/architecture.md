@@ -40,8 +40,7 @@ flowchart LR
 |---|---|---|
 | Tool surface | `objectstore_mcp/mcp/mcp_objectstore.py` | Action routing, parameter parsing, text/base64 encoding, **all safety enforcement** (CONCEPT:OB-OS.governance.obj-2/1.3) |
 | Store registry | `objectstore_mcp/config.py`, `objectstore_mcp/auth.py` | `OBJECTSTORE_STORES` parsing, default-store resolution, per-store backend cache (CONCEPT:OB-OS.config.obj) |
-| Backend protocol | `objectstore_mcp/api/api_client_base.py` | The provider-neutral contract, dataclasses, error taxonomy, name/key validation (CONCEPT:OB-OS.governance.every-provider-implements-same) |
-| Backends | `objectstore_mcp/api/api_client_{filesystem,s3,gcs,azure_blob}.py` | Pure storage adapters; lazy SDK imports (CONCEPT:OB-OS.governance.zero-infra-default/1.5) |
+| Backend protocol and backends | `scion_sdk.storage` (scion-sdk) | The provider-neutral contract, error taxonomy, store registry and the filesystem, S3-compatible, GCS, Azure and WebDAV backends; this connector ships no copy |
 
 ## Design decisions
 
@@ -61,7 +60,6 @@ flowchart LR
   implements the full protocol (including metadata via `.meta/` sidecars and
   delimiter-folded pagination), which is what makes the conformance suite
   real coverage rather than mock theater.
-- **Conformance over per-backend tests.** `tests/test_backend_conformance.py`
-  is parametrized on the backend fixture; cloud adapters get focused
-  translation tests with injected fake clients, plus an optional moto suite
-  (`test-s3` extra).
+- **Conformance lives with the backends.** The protocol conformance suite and
+  the per-backend tests live in scion-sdk; `tests/test_sdk_backends.py` here
+  proves every store routes through the SDK.

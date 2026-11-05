@@ -1,24 +1,13 @@
-"""Store resolution and per-backend credential wiring (CONCEPT:OB-OS.config.obj).
+"""Store resolution (CONN-OBJECTSTORE-MCP-R001).
 
-Credentials are never read here directly — each provider SDK resolves its own
-chain, and this module only decides *which* store (and therefore which
-backend + settings) a tool call targets:
-
-- **S3 / MinIO / R2** — boto3's standard chain (``AWS_ACCESS_KEY_ID``/
-  ``AWS_SECRET_ACCESS_KEY`` env, ``~/.aws`` profiles via the store's
-  ``profile``, SSO, instance metadata). ``endpoint`` points at MinIO/R2.
-- **Google Cloud Storage** — Application Default Credentials
-  (``GOOGLE_APPLICATION_CREDENTIALS`` service-account file, gcloud, workload
-  identity).
-- **Azure Blob** — ``AZURE_STORAGE_CONNECTION_STRING`` (or a per-store
-  ``connection_string`` option).
-- **Filesystem** — no credentials; a configurable root directory.
-
+This module decides *which* store a tool call targets. The SDK builds the
+backend (``scion_sdk.storage.create_backend``) and resolves the store's
+credential references; no ambient provider credential chain is consulted.
 Backends are built once per store and cached for the process lifetime.
 """
 
-from objectstore_mcp.api import ObjectStoreBackend, create_backend
-from objectstore_mcp.api.api_client_base import ObjectStoreError
+from scion_sdk.storage import ObjectStoreBackend, StorageError, create_backend
+
 from objectstore_mcp.config import StoreConfig, default_store_name, load_stores
 
 _BACKEND_CACHE: dict[str, ObjectStoreBackend] = {}
@@ -58,13 +47,13 @@ def resolve_store(store: str | None = None) -> StoreConfig:
             return stores[default]
         if entitled:
             return stores[entitled[0]]
-        raise ObjectStoreError(
+        raise StorageError(
             "No object stores are available to your identity. Your "
             "Okta/Keycloak groups grant none of the configured stores."
         )
     config = stores.get(store)
     if config is None:
-        raise ObjectStoreError(
+        raise StorageError(
             f"Unknown store {store!r}. Configured stores: {sorted(stores)}."
         )
     if store not in entitled:

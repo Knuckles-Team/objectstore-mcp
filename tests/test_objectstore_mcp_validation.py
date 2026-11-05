@@ -74,7 +74,9 @@ async def test_put_get_text_and_base64(mcp):
     )
     assert put["size"] == 11
 
-    got = await call(mcp, "objects", "get", {"bucket": "data", "key": "notes/hello.txt"})
+    got = await call(
+        mcp, "objects", "get", {"bucket": "data", "key": "notes/hello.txt"}
+    )
     assert got == {
         "bucket": "data",
         "key": "notes/hello.txt",
@@ -108,9 +110,7 @@ async def test_list_with_pagination(mcp):
         await call(
             mcp, "objects", "put", {"bucket": "data", "key": f"k{i}", "text": "x"}
         )
-    page = await call(
-        mcp, "objects", "list", {"bucket": "data", "max_keys": 3}
-    )
+    page = await call(mcp, "objects", "list", {"bucket": "data", "max_keys": 3})
     assert len(page["objects"]) == 3 and page["truncated"]
     rest = await call(
         mcp,

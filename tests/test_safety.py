@@ -63,9 +63,7 @@ async def test_get_cap_enforced(mcp, monkeypatch):
 async def test_list_cap_clamped(mcp, monkeypatch):
     monkeypatch.setenv("OBJECTSTORE_MAX_LIST_KEYS", "2")
     await seed(mcp)
-    page = await call(
-        mcp, "objects", "list", {"bucket": "data", "max_keys": 50}
-    )
+    page = await call(mcp, "objects", "list", {"bucket": "data", "max_keys": 50})
     assert len(page["objects"]) == 2 and page["truncated"]
 
 
@@ -93,7 +91,9 @@ async def test_delete_flag_blocks_objects(mcp, monkeypatch):
     with pytest.raises(ToolError, match="disabled"):
         await call(mcp, "objects", "delete_batch", {"bucket": "data", "prefix": "tmp/"})
     with pytest.raises(ToolError, match="disabled"):
-        await call(mcp, "objects", "move", {"bucket": "data", "key": "tmp/a", "dest_key": "z"})
+        await call(
+            mcp, "objects", "move", {"bucket": "data", "key": "tmp/a", "dest_key": "z"}
+        )
 
 
 async def test_delete_batch_dry_run_by_default(mcp):

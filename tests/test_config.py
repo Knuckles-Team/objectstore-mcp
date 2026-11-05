@@ -3,11 +3,10 @@
 import json
 
 import pytest
+from scion_sdk.storage import FilesystemBackend, StorageError
 
-from objectstore_mcp.auth import get_backend, resolve_store
 from objectstore_mcp.api import BACKEND_ALIASES, create_backend
-from objectstore_mcp.api.api_client_base import ObjectStoreError
-from objectstore_mcp.api.api_client_filesystem import FilesystemBackend
+from objectstore_mcp.auth import get_backend, resolve_store
 from objectstore_mcp.config import (
     LOCAL_STORE_NAME,
     StoreConfig,
@@ -28,20 +27,22 @@ def test_stores_json_parsed(monkeypatch):
         "OBJECTSTORE_STORES",
         json.dumps(
             {
-                "media": {"backend": "s3", "bucket": "media-prod", "profile": "prod"},
+                "media": {
+                    "backend": "s3",
+                    "bucket": "media-prod",
+                    "credentials": {"access_key_id": "env://MEDIA_KEY_ID"},
+                },
                 "minio": {
                     "backend": "s3",
                     "endpoint": "http://minio.example:9000",
-                    "custom_flag": True,
                 },
             }
         ),
     )
     stores = load_stores()
     assert stores["media"].bucket == "media-prod"
-    assert stores["media"].profile == "prod"
+    assert stores["media"].credentials == {"access_key_id": "env://MEDIA_KEY_ID"}
     assert stores["minio"].endpoint == "http://minio.example:9000"
-    assert stores["minio"].options == {"custom_flag": True}
     assert LOCAL_STORE_NAME in stores
 
 
@@ -53,7 +54,12 @@ def test_invalid_stores_json_rejected(monkeypatch):
     with pytest.raises(ValueError, match="JSON object"):
         load_stores()
     monkeypatch.setenv("OBJECTSTORE_STORES", '{"x": {"bucket": "b"}}')
-    with pytest.raises(ValueError, match="backend"):
+    with pytest.raises(StorageError, match="backend"):
+        load_stores()
+    monkeypatch.setenv(
+        "OBJECTSTORE_STORES", '{"x": {"backend": "s3", "profile": "prod"}}'
+    )
+    with pytest.raises(StorageError, match="profile"):
         load_stores()
 
 
@@ -71,7 +77,7 @@ def test_default_store_resolution(monkeypatch):
 
 
 def test_resolve_unknown_store():
-    with pytest.raises(ObjectStoreError, match="Unknown store"):
+    with pytest.raises(StorageError, match="Unknown store"):
         resolve_store("ghost")
 
 
@@ -117,5 +123,5 @@ def test_backend_aliases_resolve(tmp_path):
 
 
 def test_unknown_backend_rejected():
-    with pytest.raises(ObjectStoreError, match="Unknown backend"):
+    with pytest.raises(StorageError, match="unknown backend"):
         create_backend(StoreConfig(name="x", backend="carrier-pigeon"))

@@ -57,7 +57,7 @@ For focused feedback, use the tests that exercise the actual connector paths:
 
 ```bash
 uv run --locked --extra test pytest tests/test_publication_workflow.py -q
-uv run --locked --extra test pytest tests/test_objectstore_mcp_validation.py tests/test_backend_conformance.py -q
+uv run --locked --extra test pytest tests/test_objectstore_mcp_validation.py tests/test_sdk_backends.py -q
 uv run --locked --extra test pytest tests/test_auth.py tests/test_api_wrapper.py tests/test_safety.py -q
 ```
 

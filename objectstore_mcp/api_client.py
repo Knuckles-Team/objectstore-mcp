@@ -12,7 +12,7 @@ from objectstore_mcp.api import (
     ObjectInfo,
     ObjectPage,
     ObjectStoreBackend,
-    ObjectStoreError,
+    StorageError,
     UnsupportedOperationError,
     create_backend,
 )
@@ -29,7 +29,7 @@ __all__ = [
     "ObjectInfo",
     "ObjectPage",
     "ObjectStoreBackend",
-    "ObjectStoreError",
+    "StorageError",
     "UnsupportedOperationError",
     "create_backend",
 ]

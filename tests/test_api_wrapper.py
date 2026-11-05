@@ -3,7 +3,7 @@
 from objectstore_mcp.api_client import (
     BACKEND_ALIASES,
     ObjectStoreBackend,
-    ObjectStoreError,
+    StorageError,
     create_backend,
 )
 from objectstore_mcp.config import StoreConfig
@@ -28,6 +28,6 @@ def test_create_backend_unknown_raises():
     store = StoreConfig(name="t", backend="carrier-pigeon")
     try:
         create_backend(store)
-        raise AssertionError("expected ObjectStoreError")
-    except ObjectStoreError as exc:
+        raise AssertionError("expected StorageError")
+    except StorageError as exc:
         assert "carrier-pigeon" in str(exc)

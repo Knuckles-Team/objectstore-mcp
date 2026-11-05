@@ -43,7 +43,7 @@ def test_development_skill_has_real_delivery_contract_and_actual_tests():
     for test_path in (
         "tests/test_publication_workflow.py",
         "tests/test_objectstore_mcp_validation.py",
-        "tests/test_backend_conformance.py",
+        "tests/test_sdk_backends.py",
         "tests/test_auth.py",
         "tests/test_api_wrapper.py",
         "tests/test_safety.py",
