@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-11-05
+
+### Changed
+- Every store runs through the scion-sdk storage backends (`scion_sdk.storage`);
+  the connector's own backend modules are removed (CONN-OBJECTSTORE-MCP-R001).
+- Store secrets move to a per-store `credentials` map of secret references
+  (`env://`, `openbao://`); the `profile` field and the ambient provider
+  credential chains are removed. Migrate each store before upgrading.
+- Extras `s3`, `gcs`, `azure` install the SDK extras `storage-s3`, `storage-gcs`,
+  `storage-azure` (CONN-OBJECTSTORE-MCP-R002). Requires `scion-sdk>=0.8.0,<0.9`.
+
+### Added
+- WebDAV stores (`"backend": "webdav"`) through the SDK WebDAV backend
+  (CONN-OBJECTSTORE-MCP-R003).
+
+### Fixed
+- Documents name the SDK by its current name (CONN-OBJECTSTORE-MCP-R004).
+
 ## [2.3.8] - 2026-10-30
 
 ### Changed

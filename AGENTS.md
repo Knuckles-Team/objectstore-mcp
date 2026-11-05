@@ -22,7 +22,7 @@ Tool-neutral rules for any AI agent or human working in this repository. This bl
   - `mcp/mcp_objectstore.py`: The action-routed tool surface and the **only**
     place safety policy (caps, remove flags, dry-run) is enforced
   - `config.py` / `auth.py`: Named-store registry, backend cache, and `get_client()`
-- `tests/`: Test suite (`test_backend_conformance.py` is the protocol contract)
+- `tests/`: Test suite (`test_sdk_backends.py` proves every store runs through the SDK backends; the protocol conformance suite lives in scion-sdk `tests/storage/`)
 - `docs/`: Architecture, usage, and the `CONCEPT:OBJ-*` registry
 
 ## Tech Stack
@@ -160,7 +160,7 @@ Working in parallel with other sessions/worktrees? **Reserve a concept id before
 scion-sdk --json concept reserve --ns EG-KG.compute.backend   # or a package prefix, e.g. KEY
 ```
 
-Full protocol (ledger, merge=union, reconcile, MCP/REST): <https://knuckles-team.github.io/agent-connector-sdk/concept_coordination/>
+Full protocol (ledger, merge=union, reconcile, MCP/REST): <https://knuckles-team.github.io/scion-sdk/concept_coordination/>
 <!-- END concept-coordination (generated) -->
 
 ## Version & lockfile drift edict (keep the version mirrors AND the lock in sync)

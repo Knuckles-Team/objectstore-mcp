@@ -16,8 +16,8 @@ from typing import Any
 
 from fastmcp import FastMCP
 from pydantic import Field
+from scion_sdk.storage import StorageError
 
-from objectstore_mcp.api.api_client_base import ObjectStoreError
 from objectstore_mcp.auth import entitled_store_names, get_backend
 from objectstore_mcp.config import Limits, StoreConfig, load_limits, load_stores
 
@@ -545,4 +545,4 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
     _ = (objects, buckets, transfer, objectstore_ingest)
 
 
-__all__ = ["register_objectstore_tools", "ObjectStoreError"]
+__all__ = ["register_objectstore_tools", "StorageError"]

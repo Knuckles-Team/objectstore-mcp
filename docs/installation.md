@@ -18,9 +18,10 @@ raises a `MissingDependencyError` that names the extra to install.
 
 | Backend | Resolution |
 |---|---|
-| S3 / MinIO / R2 | boto3's standard chain: `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`, `~/.aws` config (per-store `profile`), SSO, instance metadata. Per-store `endpoint` targets MinIO/R2. |
-| GCS | Application Default Credentials: `GOOGLE_APPLICATION_CREDENTIALS` service-account file, gcloud user credentials, or workload identity. |
-| Azure Blob | `AZURE_STORAGE_CONNECTION_STRING` (or a per-store `connection_string` option). |
+| S3-compatible | Store `credentials`: `access_key_id`, `secret_access_key` (secret references). Per-store `endpoint`; `presign_endpoint` for externally reachable signed URLs. |
+| GCS | Store `credentials.service_account_json` (secret reference), else the platform workload identity. |
+| Azure Blob | Store `credentials.connection_string` (secret reference). |
+| WebDAV | Store `credentials`: `username`, `password` (secret references); `endpoint` is the collection root. |
 | Filesystem | None. Root directory from the store's `root` or `OBJECTSTORE_FS_ROOT`. |
 
 ## Docker

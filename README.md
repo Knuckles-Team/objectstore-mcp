@@ -49,7 +49,7 @@ batch deletes are enforced uniformly in the tool layer, in either case of backen
   The whole tool set toggles with `OBJECTSTORETOOL`.
 
 - **Named multi-store routing** — `OBJECTSTORE_STORES` JSON maps store names
-  to `{backend, bucket?, endpoint?, profile?, ...}`; every tool takes an
+  to `{backend, bucket?, endpoint?, credentials?, ...}`; every tool takes an
   optional `store` argument. A zero-infra `local` filesystem store always
   exists, so the server works with no cloud credentials at all.
 - **A safety governor** — size caps on get/put/transfer, list/batch key caps,
@@ -165,7 +165,7 @@ diagrams are documented in the
 
 | Var | Default | Meaning |
 |---|---|---|
-| `OBJECTSTORE_STORES` | _(empty)_ | JSON: store name → `{backend, bucket?, endpoint?, profile?, region?, root?, project?, connection_string?}` |
+| `OBJECTSTORE_STORES` | _(empty)_ | JSON: store name → `{backend, bucket?, endpoint?, region?, root?, project?, presign_endpoint?, allowed_private_hosts?, credentials?}` |
 | `OBJECTSTORE_DEFAULT_STORE` | first configured store, else `local` | Store used when a tool call omits `store` |
 | `OBJECTSTORE_FS_ROOT` | `~/.local/share/objectstore-mcp` | Root of the implicit `local` filesystem store |
 | `OBJECTSTORE_MAX_GET_BYTES` | `10485760` (10 MiB) | Cap on `objects get` |
@@ -182,22 +182,26 @@ diagrams are documented in the
 | `EUNOMIA_TYPE` / `EUNOMIA_POLICY_FILE` | `none` / `mcp_policies.json` | Eunomia access-governance middleware |
 | `MCP_URL` | _(empty)_ | MCP endpoint the A2A agent connects to |
 
-Provider credentials resolve through each SDK's own chain — boto3's
-resolution order for S3 (env keys, `~/.aws` profiles via the store's
-`profile`, SSO, instance metadata), `GOOGLE_APPLICATION_CREDENTIALS` /
-Application Default Credentials for GCS, and
-`AZURE_STORAGE_CONNECTION_STRING` for Azure Blob.
+Backends come from the scion-sdk storage layer (`scion_sdk.storage`). Each
+store names its secrets in a `credentials` map of secret references
+(`env://NAME` or `openbao://path#key`) — a literal value is refused. Accepted
+keys: S3 `access_key_id`, `secret_access_key`, `session_token`; GCS
+`service_account_json`; Azure `connection_string`; WebDAV `username`,
+`password`. No ambient provider credential chain is consulted.
 
 ### Example store registry
 
 ```json
 {
-  "media":   {"backend": "s3", "bucket": "media-prod", "profile": "prod", "region": "us-east-1"},
-  "minio":   {"backend": "s3", "endpoint": "http://minio.example.invalid:9000"},
-  "r2":      {"backend": "s3", "endpoint": "https://<account>.r2.cloudflarestorage.com"},
+  "media":   {"backend": "s3", "bucket": "media-prod", "region": "us-east-1",
+              "credentials": {"access_key_id": "env://MEDIA_KEY_ID", "secret_access_key": "env://MEDIA_SECRET"}},
+  "objects": {"backend": "s3", "endpoint": "https://objects.example.invalid",
+              "credentials": {"access_key_id": "env://OBJ_KEY_ID", "secret_access_key": "openbao://kv/objects#secret"}},
   "reports": {"backend": "gcs", "bucket": "acme-reports"},
-  "archive": {"backend": "azure", "bucket": "archive"},
-  "scratch": {"backend": "filesystem", "root": "~/scratch-store"}
+  "archive": {"backend": "azure", "bucket": "archive", "credentials": {"connection_string": "env://ARCHIVE_CONN"}},
+  "share":   {"backend": "webdav", "endpoint": "https://files.example.invalid/dav/files/svc",
+              "credentials": {"username": "env://SHARE_USER", "password": "env://SHARE_PASS"}},
+  "scratch": {"backend": "filesystem", "root": "/srv/scratch-store"}
 }
 ```
 
