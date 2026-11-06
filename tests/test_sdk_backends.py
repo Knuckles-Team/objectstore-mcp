@@ -17,7 +17,7 @@ RETIRED = re.compile(r"agent[-_]connector[-_]sdk")
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R001")
 def test_tools_route_through_sdk_backends_and_no_local_copy(local_store_env):
     backend, config = get_backend("local")
-    assert type(backend).__module__.startswith("scion_sdk.storage.")
+    assert type(backend.inner).__module__.startswith("scion_sdk.storage.")
     backend.create_bucket("data")
     backend.put_object("data", "k.txt", b"hello")
     assert backend.get_object("data", "k.txt") == b"hello"
@@ -62,9 +62,9 @@ def test_webdav_store_routes_through_sdk(monkeypatch):
     )
     reset_backend_cache()
     backend, _config = get_backend("share")
-    assert isinstance(backend, WebDavBackend)
+    assert isinstance(backend.inner, WebDavBackend)
     with pytest.raises(UnsupportedOperationError) as excinfo:
-        backend.presigned_url("bucket", "key")
+        backend.inner.presigned_url("bucket", "key")
     assert excinfo.value.code == "STORAGE_UNSUPPORTED"
 
 
@@ -79,3 +79,13 @@ def test_no_retired_sdk_name_in_package_or_docs():
         if p.is_file() and RETIRED.search(p.read_text(encoding="utf-8"))
     ]
     assert hits == []
+
+
+@pytest.mark.spec("CONN-OBJECTSTORE-MCP-R002.1")
+def test_served_image_installs_every_provider_extra():
+    data = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    extras = data["tool"]["pipelines"]["container"]["install_extras"]
+    assert sorted(extras["mcp"]) == ["azure", "gcs", "s3"]
+    assert data["project"]["optional-dependencies"]["all"] == [
+        "objectstore-mcp[s3,gcs,azure]"
+    ]

@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-11-06
+
+### Changed
+- One typed tool per operation; the action-routed `objects`, `buckets`,
+  `transfer` and `objectstore_ingest` tools are removed. New typed tools:
+  `objectstore_list_stores`, `objectstore_move_object`,
+  `objectstore_delete_objects_by_prefix`, `objectstore_upload_file`,
+  `objectstore_download_file`, `objectstore_upload_directory`,
+  `objectstore_download_prefix`, `objectstore_ingest_buckets`,
+  `objectstore_ingest_objects` (CONN-OBJECTSTORE-MCP-R005).
+- Caps and delete guards wrap every tool's backend, including the
+  SDK-generated per-operation tools (CONN-OBJECTSTORE-MCP-R006).
+- A store refusal keeps its storage code and message (CONN-OBJECTSTORE-MCP-R005).
+
+### Added
+- S3 lifecycle rules, bucket versioning and object tags
+  (CONN-OBJECTSTORE-MCP-R007).
+- The `objectstore-business-asset-store` skill, the Asset Librarian prompt, and
+  ontology roll-up, tool, skill, contract and data-location records
+  (CONN-OBJECTSTORE-MCP-R008).
+
+### Fixed
+- The served image installs the `s3`, `gcs` and `azure` extras; 2.4.0 images
+  refused every S3 store with `STORAGE_DEPENDENCY_MISSING`
+  (CONN-OBJECTSTORE-MCP-R002.1).
+
 ## [2.4.0] - 2026-11-05
 
 ### Changed

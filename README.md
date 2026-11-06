@@ -37,16 +37,10 @@ batch deletes are enforced uniformly in the tool layer, in either case of backen
   CONCEPT:OB-OS.governance.every-provider-implements-same) — every provider implements the same
   `ObjectStoreBackend` protocol, validated by a single conformance test
   suite that runs for real against the filesystem backend.
-- **Three consolidated, action-routed MCP tools** (`objectstore-mcp`
-  console script):
-
-  | Tool | Actions | Description |
-  |---|---|---|
-  | `objects` | `list` (prefix/delimiter pagination), `head`, `get` (text/base64, size-capped), `put` (text/base64, size-capped), `copy`, `move`, `delete`, `delete_batch` (capped, dry-run by default), `presign`, `metadata_get`, `metadata_set` | Single-object lifecycle and listing on any store |
-  | `buckets` | `list`, `create`, `delete` (empty-only, opt-in), `exists`, `info`, `stores` | Bucket/container admin and store registry introspection |
-  | `transfer` | `upload`, `download`, `upload_dir`, `download_prefix` (all size/batch-capped) | Local-filesystem ⇄ object-store transfer, single or by prefix |
-
-  The whole tool set toggles with `OBJECTSTORETOOL`.
+- **One typed MCP tool per operation** (`objectstore-mcp` console script):
+  buckets and objects, presigned URLs, metadata and tags, guarded moves and
+  prefix deletes, file and directory transfers, S3 lifecycle rules and
+  versioning, and knowledge-graph ingestion. See the table below.
 
 - **Named multi-store routing** — `OBJECTSTORE_STORES` JSON maps store names
   to `{backend, bucket?, endpoint?, credentials?, ...}`; every tool takes an
@@ -63,40 +57,46 @@ batch deletes are enforced uniformly in the tool layer, in either case of backen
 
 <!-- MCP-TOOLS-TABLE:START -->
 
-#### Condensed action-routed tools (default — `MCP_TOOL_MODE=condensed`)
+One typed tool per operation; no tool takes an `action` argument. The
+per-operation tools of the backend protocol act on the default store; the others
+take an optional `store`.
 
-| MCP Tool | Toggle Env Var | Description |
-|----------|----------------|-------------|
-| `buckets` | `OBJECTSTORETOOL` | Manage buckets/containers and inspect configured stores. |
-| `objects` | `OBJECTSTORETOOL` | List, read, write, copy, move, delete, presign, and tag objects. |
-| `transfer` | `OBJECTSTORETOOL` | Move data between the local filesystem and object storage. |
+| MCP Tool | Parameters | Description |
+|----------|------------|-------------|
+| `objectstore_bucket_exists` | `bucket` | Return True when the bucket exists. |
+| `objectstore_bucket_info` | `bucket` | Describe one bucket. Raises NotFoundError when absent. |
+| `objectstore_capabilities` | — | Advertise optional capabilities. |
+| `objectstore_copy_object` | `dst_bucket`, `dst_key`, `src_bucket`, `src_key` | Server-side (where possible) copy of one object. |
+| `objectstore_create_bucket` | `bucket`, `location` | Create a bucket. Raises AlreadyExistsError if it exists. |
+| `objectstore_delete_bucket` | `bucket`, `confirm` | Delete an EMPTY bucket. Raises BucketNotEmptyError otherwise. |
+| `objectstore_delete_bucket_lifecycle` | `bucket`, `store` | Remove every lifecycle rule from a bucket. |
+| `objectstore_delete_object` | `bucket`, `confirm`, `key` | Delete exactly one object. Raises NotFoundError when absent. |
+| `objectstore_delete_object_tags` | `bucket`, `key`, `store` | Remove every tag from an object. |
+| `objectstore_delete_objects_by_prefix` | `bucket`, `dry_run`, `max_keys`, `prefix`, `store` | Delete objects under a non-empty prefix (dry run by default, count-capped). |
+| `objectstore_download_file` | `bucket`, `key`, `local_path`, `overwrite`, `store` | Download one object to a local file (capped by OBJECTSTORE_MAX_TRANSFER_BYTES). |
+| `objectstore_download_prefix` | `bucket`, `local_dir`, `max_keys`, `overwrite`, `prefix`, `store` | Download the objects under a prefix into a local directory (capped). |
+| `objectstore_get_bucket_lifecycle` | `bucket`, `store` | Read a bucket's lifecycle rules (empty list when none are set). |
+| `objectstore_get_bucket_versioning` | `bucket`, `store` | Read a bucket's versioning state (Enabled, Suspended or unset). |
+| `objectstore_get_object` | `bucket`, `key`, `max_bytes` | Download an object's bytes. Raises TooLargeError when the |
+| `objectstore_get_object_metadata` | `bucket`, `key` | Return the user metadata of one object. |
+| `objectstore_get_object_tags` | `bucket`, `key`, `store` | Read an object's tag set. |
+| `objectstore_head_object` | `bucket`, `key` | Stat one object without downloading it. |
+| `objectstore_ingest_buckets` | `store` | Mirror the store's buckets into the knowledge graph as :Bucket nodes. |
+| `objectstore_ingest_objects` | `bucket`, `max_keys`, `prefix`, `store` | Mirror object metadata under a prefix into the knowledge graph as :Object nodes. |
+| `objectstore_list_buckets` | — | List all buckets/containers visible to the credentials. |
+| `objectstore_list_objects` | `bucket`, `continuation_token`, `delimiter`, `max_keys`, `prefix` | List objects under ``prefix``, optionally folding at ``delimiter``. |
+| `objectstore_list_stores` | — | List the named stores the caller is entitled to, with backend and endpoint. |
+| `objectstore_move_object` | `dst_bucket`, `dst_key`, `src_bucket`, `src_key`, `store` | Move one object: copy it to dst_bucket/dst_key, then delete the source. |
+| `objectstore_presigned_url` | `bucket`, `expires_in`, `key`, `method` | Mint a presigned URL. Raises UnsupportedOperationError when the |
+| `objectstore_put_bucket_lifecycle` | `bucket`, `rules`, `store` | Replace a bucket's lifecycle rules (expiry, noncurrent expiry, transitions). |
+| `objectstore_put_bucket_versioning` | `bucket`, `status`, `store` | Enable or suspend object versioning on a bucket. |
+| `objectstore_put_object` | `bucket`, `content_type`, `data`, `key`, `metadata` | Upload bytes to ``bucket/key`` (overwrites). |
+| `objectstore_put_object_tags` | `bucket`, `key`, `store`, `tags` | Replace an object's tag set (at most 10 tags). |
+| `objectstore_set_object_metadata` | `bucket`, `key`, `metadata` | Replace the user metadata of one object. |
+| `objectstore_upload_directory` | `bucket`, `local_dir`, `max_keys`, `prefix`, `store` | Upload every file under a local directory to objects under a prefix (capped). |
+| `objectstore_upload_file` | `bucket`, `content_type`, `key`, `local_path`, `metadata`, `store` | Upload one local file to an object (capped by OBJECTSTORE_MAX_TRANSFER_BYTES). |
 
-#### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
-
-<details>
-<summary>15 per-operation tools — one per public API method (click to expand)</summary>
-
-| MCP Tool | Toggle Env Var | Description |
-|----------|----------------|-------------|
-| `objectstore_bucket_exists` | `OBJECT_STORE_BACKENDTOOL` | Return True when the bucket exists. |
-| `objectstore_bucket_info` | `OBJECT_STORE_BACKENDTOOL` | Describe one bucket. Raises NotFoundError when absent. |
-| `objectstore_capabilities` | `OBJECT_STORE_BACKENDTOOL` | Advertise optional capabilities. |
-| `objectstore_copy_object` | `OBJECT_STORE_BACKENDTOOL` | Server-side (where possible) copy of one object. |
-| `objectstore_create_bucket` | `OBJECT_STORE_BACKENDTOOL` | Create a bucket. Raises AlreadyExistsError if it exists. |
-| `objectstore_delete_bucket` | `OBJECT_STORE_BACKENDTOOL` | Delete an EMPTY bucket. Raises BucketNotEmptyError otherwise. |
-| `objectstore_delete_object` | `OBJECT_STORE_BACKENDTOOL` | Delete exactly one object. Raises NotFoundError when absent. |
-| `objectstore_get_object` | `OBJECT_STORE_BACKENDTOOL` | Download an object's bytes. Raises ObjectStoreError when the |
-| `objectstore_get_object_metadata` | `OBJECT_STORE_BACKENDTOOL` | Return the user metadata of one object. |
-| `objectstore_head_object` | `OBJECT_STORE_BACKENDTOOL` | Stat one object without downloading it. |
-| `objectstore_list_buckets` | `OBJECT_STORE_BACKENDTOOL` | List all buckets/containers visible to the credentials. |
-| `objectstore_list_objects` | `OBJECT_STORE_BACKENDTOOL` | List objects under ``prefix``, optionally folding at ``delimiter``. |
-| `objectstore_presigned_url` | `OBJECT_STORE_BACKENDTOOL` | Mint a presigned URL. Raises UnsupportedOperationError when the |
-| `objectstore_put_object` | `OBJECT_STORE_BACKENDTOOL` | Upload bytes to ``bucket/key`` (overwrites). |
-| `objectstore_set_object_metadata` | `OBJECT_STORE_BACKENDTOOL` | Replace the user metadata of one object. |
-
-</details>
-
-_3 action-routed tool(s) (default) · 15 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+_32 tools._
 <!-- MCP-TOOLS-TABLE:END -->
 
 ## Backend × capability matrix
@@ -216,13 +216,16 @@ Example tool calls (any MCP client):
 
 ```jsonc
 // Write then read a text object on the zero-infra local store
-{"tool": "buckets",  "arguments": {"action": "create", "params_json": "{\"bucket\": \"notes\"}"}}
-{"tool": "objects",  "arguments": {"action": "put",    "params_json": "{\"bucket\": \"notes\", \"key\": \"todo.md\", \"text\": \"- ship it\"}"}}
-{"tool": "objects",  "arguments": {"action": "get",    "params_json": "{\"bucket\": \"notes\", \"key\": \"todo.md\"}"}}
+{"tool": "objectstore_create_bucket", "arguments": {"bucket": "notes"}}
+{"tool": "objectstore_put_object",    "arguments": {"bucket": "notes", "key": "todo.md", "data": "- ship it"}}
+{"tool": "objectstore_get_object",    "arguments": {"bucket": "notes", "key": "todo.md"}}
 
-// Preview then execute a prefix-scoped batch delete on a named S3 store
-{"tool": "objects", "arguments": {"store": "media", "action": "delete_batch", "params_json": "{\"bucket\": \"media-prod\", \"prefix\": \"tmp/\"}"}}
-{"tool": "objects", "arguments": {"store": "media", "action": "delete_batch", "params_json": "{\"bucket\": \"media-prod\", \"prefix\": \"tmp/\", \"dry_run\": false}"}}
+// Preview then execute a prefix-scoped delete on a named S3 store
+{"tool": "objectstore_delete_objects_by_prefix", "arguments": {"store": "media", "bucket": "media-prod", "prefix": "tmp/"}}
+{"tool": "objectstore_delete_objects_by_prefix", "arguments": {"store": "media", "bucket": "media-prod", "prefix": "tmp/", "dry_run": false}}
+
+// Expire scratch objects after 7 days
+{"tool": "objectstore_put_bucket_lifecycle", "arguments": {"store": "media", "bucket": "media-prod", "rules": [{"id": "scratch-7d", "prefix": "scratch/", "expiration_days": 7}]}}
 ```
 
 ## MCP config

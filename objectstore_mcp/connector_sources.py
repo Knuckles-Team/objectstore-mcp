@@ -19,9 +19,6 @@ SOURCES: tuple[Any, ...] = (
         cursor_field="last_modified",
         preset={
             "doc_type": "objectstore_object",
-            "params": {
-                "action": "list",
-            },
         },
         records_path="objects",
         server="objectstore-mcp",
@@ -49,15 +46,15 @@ FIELD_SETS: dict[str, dict[str, str]] = {
 SCHEMA_MAPPINGS: dict[str, Any] = {
     "Bucket": {
         "field_sets": ["fields_1"],
-        "ontology_class": None,
+        "ontology_class": "Bucket",
     },
     "Object": {
         "field_sets": ["fields_1"],
-        "ontology_class": None,
+        "ontology_class": "Object",
     },
     "ObjectStore": {
         "field_sets": ["fields_1"],
-        "ontology_class": None,
+        "ontology_class": "ObjectStore",
     },
 }
 

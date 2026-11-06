@@ -1192,7 +1192,7 @@ wheels = [
 
 [[package]]
 name = "objectstore-mcp"
-version = "2.4.0"
+version = "2.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "python-dotenv" },
@@ -1226,16 +1226,16 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "objectstore-mcp", extras = ["s3", "gcs", "azure"], marker = "extra == 'all'", specifier = ">=1.0.1" },
+    { name = "objectstore-mcp", extras = ["s3", "gcs", "azure"], marker = "extra == 'all'" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.4.0" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1.0" },
     { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.8.0" },
     { name = "python-dotenv", specifier = ">=1.2.4" },
-    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.8.0,<0.9" },
-    { name = "scion-sdk", extras = ["storage-azure"], marker = "extra == 'azure'", specifier = ">=0.8.0,<0.9" },
-    { name = "scion-sdk", extras = ["storage-gcs"], marker = "extra == 'gcs'", specifier = ">=0.8.0,<0.9" },
-    { name = "scion-sdk", extras = ["storage-s3"], marker = "extra == 's3'", specifier = ">=0.8.0,<0.9" },
+    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.8.2,<0.9" },
+    { name = "scion-sdk", extras = ["storage-azure"], marker = "extra == 'azure'", specifier = ">=0.8.2,<0.9" },
+    { name = "scion-sdk", extras = ["storage-gcs"], marker = "extra == 'gcs'", specifier = ">=0.8.2,<0.9" },
+    { name = "scion-sdk", extras = ["storage-s3"], marker = "extra == 's3'", specifier = ">=0.8.2,<0.9" },
 ]
 provides-extras = ["s3", "gcs", "azure", "all", "test"]
 
@@ -1930,7 +1930,7 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.8.0"
+version = "0.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1943,9 +1943,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/95/fd/d6b86b7b6f3003ee6466071006a852350e09afa50103917b8d9b10099f9b/scion_sdk-0.8.0.tar.gz", hash = "sha256:306442ee0d052f0253485b3aaae5a4a98f647dcbae4aa351775c50a2139294f1", size = 1213004, upload-time = "2026-11-05T10:53:30.734Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/46/be1a794123bb92160b3d5b3daecd221ddb97bb7e7dd6feb3c5736dba33f4/scion_sdk-0.8.2.tar.gz", hash = "sha256:d69defd6cc0f81e4a3c5dc486f038b01982baf118f9f97a597836f66263b039a", size = 1213277, upload-time = "2026-11-06T02:39:34.704Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/99/71d110fd51ddd5c106045201929798c6a7e81af9ee0c73dc9f4fc2008357/scion_sdk-0.8.0-py3-none-any.whl", hash = "sha256:582c5fcebfc8c03864a3cd664194729cabdc02b65e45595759fccad537dbb1a2", size = 1185186, upload-time = "2026-11-05T10:53:32.659Z" },
+    { url = "https://files.pythonhosted.org/packages/95/3c/538c1f055da7602fd7f0e591e4d9abcd3671bc52ae418cb258e7402503d6/scion_sdk-0.8.2-py3-none-any.whl", hash = "sha256:283259ccb840d94c7e8add74a964466c91530d007185a016a932d7c6cf2a2f11", size = 1185428, upload-time = "2026-11-06T02:39:32.912Z" },
 ]
 
 [package.optional-dependencies]

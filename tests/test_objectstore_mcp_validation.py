@@ -1,249 +1,259 @@
-"""End-to-end MCP tool tests over the in-memory FastMCP client.
+"""End-to-end MCP tool tests over the in-memory FastMCP client (CONN-OBJECTSTORE-MCP-R005).
 
-These exercise the real tool layer (action routing, store resolution, size
-caps, encodings) against the real filesystem backend — no mocks anywhere.
+They run the served surface (SDK per-operation tools plus the typed tools)
+against the real filesystem backend, and the S3 management tools against a
+recording client.
 """
 
-import base64
 import json
 
 import pytest
-from fastmcp import Client, FastMCP
-from fastmcp.exceptions import ToolError
+from tests.conftest import ToolFailure
+from tests.conftest import call_tool as call
+from fastmcp import Client
 
-from objectstore_mcp.mcp.mcp_objectstore import register_objectstore_tools
-
-
-@pytest.fixture
-def mcp(local_store_env):
-    server = FastMCP("objectstore-test")
-    register_objectstore_tools(server)
-    return server
+from objectstore_mcp.auth import get_backend
+from objectstore_mcp.guard import GuardedBackend
 
 
-def payload(result):
-    if getattr(result, "data", None) is not None:
-        return result.data
-    return json.loads(result.content[0].text)
-
-
-async def call(mcp, tool, action, params=None, store=None):
+@pytest.mark.spec("CONN-OBJECTSTORE-MCP-R005")
+async def test_tool_inventory_is_typed_with_no_action_routing(mcp):
     async with Client(mcp) as client:
-        arguments = {"action": action, "params_json": json.dumps(params or {})}
-        if store is not None:
-            arguments["store"] = store
-        return payload(await client.call_tool(tool, arguments))
+        tools = await client.list_tools()
+    names = {t.name for t in tools}
+    assert {
+        "objectstore_list_buckets",
+        "objectstore_put_object",
+        "objectstore_presigned_url",
+        "objectstore_list_stores",
+        "objectstore_move_object",
+        "objectstore_delete_objects_by_prefix",
+        "objectstore_upload_file",
+        "objectstore_download_prefix",
+        "objectstore_get_bucket_lifecycle",
+        "objectstore_put_bucket_lifecycle",
+        "objectstore_delete_bucket_lifecycle",
+        "objectstore_get_bucket_versioning",
+        "objectstore_put_bucket_versioning",
+        "objectstore_get_object_tags",
+        "objectstore_put_object_tags",
+        "objectstore_delete_object_tags",
+        "objectstore_ingest_buckets",
+        "objectstore_ingest_objects",
+    } <= names
+    for tool in tools:
+        props = tool.inputSchema.get("properties") or {}
+        assert "action" not in props and "params_json" not in props, tool.name
+        assert "split-action" not in ((tool.meta or {}).get("fastmcp") or {}).get(
+            "tags", []
+        ), tool.name
 
 
-async def test_tool_inventory(mcp):
-    async with Client(mcp) as client:
-        tools = {t.name for t in await client.list_tools()}
-    assert tools == {"objects", "buckets", "transfer", "objectstore_ingest"}
-
-
-async def test_bucket_lifecycle(mcp):
-    created = await call(mcp, "buckets", "create", {"bucket": "alpha"})
+async def test_bucket_and_object_crud(mcp):
+    created = await call(mcp, "objectstore_create_bucket", bucket="alpha")
     assert created["name"] == "alpha"
-    exists = await call(mcp, "buckets", "exists", {"bucket": "alpha"})
-    assert exists["exists"] is True
-    listing = await call(mcp, "buckets", "list")
-    assert [b["name"] for b in listing["buckets"]] == ["alpha"]
-    info = await call(mcp, "buckets", "info", {"bucket": "alpha"})
-    assert info["capabilities"]["presigned_urls"] is False
-
-
-async def test_stores_action(mcp):
-    stores = await call(mcp, "buckets", "stores")
-    assert "local" in stores
-    assert stores["local"]["backend"] == "filesystem"
-
-
-async def test_put_get_text_and_base64(mcp):
-    await call(mcp, "buckets", "create", {"bucket": "data"})
-    put = await call(
-        mcp,
-        "objects",
-        "put",
-        {
-            "bucket": "data",
-            "key": "notes/hello.txt",
-            "text": "hello world",
-            "content_type": "text/plain",
-            "metadata": {"owner": "ops"},
-        },
-    )
-    assert put["size"] == 11
-
-    got = await call(
-        mcp, "objects", "get", {"bucket": "data", "key": "notes/hello.txt"}
-    )
-    assert got == {
-        "bucket": "data",
-        "key": "notes/hello.txt",
-        "size": 11,
-        "encoding": "text",
-        "content": "hello world",
-    }
-
-    binary = bytes(range(256))
+    assert await call(mcp, "objectstore_bucket_exists", bucket="alpha") is True
+    listing = await call(mcp, "objectstore_list_buckets")
+    names = [b["name"] for b in (listing.get("result", listing) if isinstance(listing, dict) else listing)]
+    assert names == ["alpha"]
     await call(
         mcp,
-        "objects",
-        "put",
-        {
-            "bucket": "data",
-            "key": "blob.bin",
-            "content_base64": base64.b64encode(binary).decode(),
-        },
+        "objectstore_put_object",
+        bucket="alpha",
+        key="docs/a.txt",
+        data="hello",
+        content_type="text/plain",
     )
-    got = await call(mcp, "objects", "get", {"bucket": "data", "key": "blob.bin"})
-    assert got["encoding"] == "base64"
-    assert base64.b64decode(got["content"]) == binary
-
-    head = await call(mcp, "objects", "head", {"bucket": "data", "key": "blob.bin"})
-    assert head["size"] == 256
-
-
-async def test_list_with_pagination(mcp):
-    await call(mcp, "buckets", "create", {"bucket": "data"})
-    for i in range(5):
-        await call(
-            mcp, "objects", "put", {"bucket": "data", "key": f"k{i}", "text": "x"}
-        )
-    page = await call(mcp, "objects", "list", {"bucket": "data", "max_keys": 3})
-    assert len(page["objects"]) == 3 and page["truncated"]
-    rest = await call(
+    head = await call(mcp, "objectstore_head_object", bucket="alpha", key="docs/a.txt")
+    assert head["size"] == 5
+    await call(
         mcp,
-        "objects",
-        "list",
-        {"bucket": "data", "max_keys": 3, "token": page["next_token"]},
+        "objectstore_copy_object",
+        src_bucket="alpha",
+        src_key="docs/a.txt",
+        dst_bucket="alpha",
+        dst_key="docs/b.txt",
     )
-    assert len(rest["objects"]) == 2 and not rest["truncated"]
-
-
-async def test_copy_move_delete(mcp):
-    await call(mcp, "buckets", "create", {"bucket": "data"})
-    await call(mcp, "objects", "put", {"bucket": "data", "key": "a", "text": "1"})
-
-    copied = await call(
-        mcp,
-        "objects",
-        "copy",
-        {"bucket": "data", "key": "a", "dest_key": "b"},
-    )
-    assert copied["dest"]["key"] == "b"
-
     moved = await call(
         mcp,
-        "objects",
-        "move",
-        {"bucket": "data", "key": "a", "dest_key": "c"},
+        "objectstore_move_object",
+        src_bucket="alpha",
+        src_key="docs/b.txt",
+        dst_bucket="alpha",
+        dst_key="docs/c.txt",
     )
-    assert moved["dest"]["key"] == "c"
-    with pytest.raises(ToolError, match="not"):
-        await call(mcp, "objects", "head", {"bucket": "data", "key": "a"})
-
-    deleted = await call(mcp, "objects", "delete", {"bucket": "data", "key": "c"})
-    assert deleted["deleted"] is True
-
-
-async def test_metadata_actions(mcp):
-    await call(mcp, "buckets", "create", {"bucket": "data"})
-    await call(mcp, "objects", "put", {"bucket": "data", "key": "k", "text": "x"})
+    assert moved["dest"]["key"] == "docs/c.txt"
+    page = await call(mcp, "objectstore_list_objects", bucket="alpha", prefix="docs/")
+    assert [o["key"] for o in page["objects"]] == ["docs/a.txt", "docs/c.txt"]
     await call(
-        mcp,
-        "objects",
-        "metadata_set",
-        {"bucket": "data", "key": "k", "metadata": {"env": "prod"}},
+        mcp, "objectstore_delete_object", bucket="alpha", key="docs/c.txt", confirm=True
     )
-    got = await call(mcp, "objects", "metadata_get", {"bucket": "data", "key": "k"})
-    assert got["metadata"] == {"env": "prod"}
 
 
-async def test_presign_unsupported_on_filesystem(mcp):
-    await call(mcp, "buckets", "create", {"bucket": "data"})
-    await call(mcp, "objects", "put", {"bucket": "data", "key": "k", "text": "x"})
-    with pytest.raises(ToolError, match="presigned"):
-        await call(mcp, "objects", "presign", {"bucket": "data", "key": "k"})
-
-
-async def test_unknown_action_and_store(mcp):
-    with pytest.raises(ToolError, match="Unknown objects action"):
-        await call(mcp, "objects", "explode", {})
-    with pytest.raises(ToolError, match="Unknown store"):
-        await call(mcp, "buckets", "list", store="ghost")
-
-
-async def test_named_store_routing(mcp, tmp_path, monkeypatch):
+async def test_list_stores_and_named_store_routing(mcp, tmp_path, monkeypatch):
     monkeypatch.setenv(
         "OBJECTSTORE_STORES",
-        json.dumps(
-            {"scratch": {"backend": "filesystem", "root": str(tmp_path / "scratch")}}
-        ),
+        json.dumps({"scratch": {"backend": "filesystem", "root": str(tmp_path / "s")}}),
     )
-    await call(mcp, "buckets", "create", {"bucket": "b"}, store="scratch")
+    stores = await call(mcp, "objectstore_list_stores")
+    assert set(stores) == {"local", "scratch"}
+    tree = tmp_path / "in"
+    tree.mkdir()
+    (tree / "f.txt").write_text("x")
+    backend, _ = get_backend("scratch")
+    backend.create_bucket("b")
     await call(
-        mcp, "objects", "put", {"bucket": "b", "key": "k", "text": "x"}, store="scratch"
+        mcp,
+        "objectstore_upload_file",
+        bucket="b",
+        local_path=str(tree / "f.txt"),
+        store="scratch",
     )
-    assert (tmp_path / "scratch" / "b" / "k").read_text() == "x"
-    # The default store (local) does not see scratch's bucket.
-    local = await call(mcp, "buckets", "list", store="local")
-    assert local["buckets"] == []
+    assert (tmp_path / "s" / "b" / "f.txt").read_text() == "x"
+    with pytest.raises(ToolFailure, match="Unknown store"):
+        await call(mcp, "objectstore_ingest_buckets", store="ghost")
 
 
 async def test_transfer_roundtrip(mcp, tmp_path):
-    await call(mcp, "buckets", "create", {"bucket": "data"})
-    src = tmp_path / "in.txt"
-    src.write_text("payload")
-    uploaded = await call(
+    await call(mcp, "objectstore_create_bucket", bucket="data")
+    tree = tmp_path / "tree"
+    (tree / "sub").mkdir(parents=True)
+    (tree / "a.txt").write_text("a")
+    (tree / "sub" / "b.txt").write_text("b")
+    up = await call(
         mcp,
-        "transfer",
-        "upload",
-        {"bucket": "data", "local_path": str(src), "key": "in.txt"},
+        "objectstore_upload_directory",
+        bucket="data",
+        local_dir=str(tree),
+        prefix="backup/",
     )
-    assert uploaded["size"] == 7
-
-    dst = tmp_path / "out" / "result.txt"
-    downloaded = await call(
+    assert up["uploaded"] == ["backup/a.txt", "backup/sub/b.txt"]
+    out = tmp_path / "restore"
+    down = await call(
         mcp,
-        "transfer",
-        "download",
-        {"bucket": "data", "key": "in.txt", "local_path": str(dst)},
+        "objectstore_download_prefix",
+        bucket="data",
+        prefix="backup/",
+        local_dir=str(out),
     )
-    assert downloaded["size"] == 7
-    assert dst.read_text() == "payload"
-
-    with pytest.raises(ToolError, match="overwrite"):
+    assert down["count"] == 2 and (out / "sub" / "b.txt").read_text() == "b"
+    dst = tmp_path / "one.txt"
+    await call(
+        mcp,
+        "objectstore_download_file",
+        bucket="data",
+        key="backup/a.txt",
+        local_path=str(dst),
+    )
+    with pytest.raises(ToolFailure, match="overwrite"):
         await call(
             mcp,
-            "transfer",
-            "download",
-            {"bucket": "data", "key": "in.txt", "local_path": str(dst)},
+            "objectstore_download_file",
+            bucket="data",
+            key="backup/a.txt",
+            local_path=str(dst),
         )
 
 
-async def test_transfer_directory_roundtrip(mcp, tmp_path):
-    await call(mcp, "buckets", "create", {"bucket": "data"})
-    src_dir = tmp_path / "tree"
-    (src_dir / "sub").mkdir(parents=True)
-    (src_dir / "a.txt").write_text("a")
-    (src_dir / "sub" / "b.txt").write_text("b")
+@pytest.mark.spec("CONN-OBJECTSTORE-MCP-R007")
+async def test_s3_management_refuses_on_filesystem_store(mcp):
+    await call(mcp, "objectstore_create_bucket", bucket="data")
+    with pytest.raises(ToolFailure, match="does not support"):
+        await call(mcp, "objectstore_get_bucket_lifecycle", bucket="data")
 
-    uploaded = await call(
-        mcp,
-        "transfer",
-        "upload_dir",
-        {"bucket": "data", "local_dir": str(src_dir), "prefix": "backup/"},
-    )
-    assert uploaded["uploaded"] == ["backup/a.txt", "backup/sub/b.txt"]
 
-    out_dir = tmp_path / "restore"
-    downloaded = await call(
+class _RecordingS3:
+    """Stands in for the boto3 client of an S3 store."""
+
+    backend_type = "s3"
+
+    def __init__(self):
+        self.calls = []
+        self.client = self
+        self.lifecycle = None
+        self.tags = []
+
+    def put_bucket_lifecycle_configuration(self, Bucket, LifecycleConfiguration):
+        self.calls.append(("put_lc", Bucket))
+        self.lifecycle = LifecycleConfiguration
+
+    def get_bucket_lifecycle_configuration(self, Bucket):
+        if self.lifecycle is None:
+            error = Exception("absent")
+            error.response = {"Error": {"Code": "NoSuchLifecycleConfiguration"}}
+            raise error
+        return self.lifecycle
+
+    def delete_bucket_lifecycle(self, Bucket):
+        self.lifecycle = None
+
+    def get_bucket_versioning(self, Bucket):
+        return {"Status": "Enabled"}
+
+    def put_bucket_versioning(self, Bucket, VersioningConfiguration):
+        self.calls.append(("versioning", VersioningConfiguration["Status"]))
+
+    def put_object_tagging(self, Bucket, Key, Tagging):
+        self.tags = Tagging["TagSet"]
+
+    def get_object_tagging(self, Bucket, Key):
+        return {"TagSet": self.tags}
+
+    def delete_object_tagging(self, Bucket, Key):
+        self.tags = []
+
+
+@pytest.mark.spec("CONN-OBJECTSTORE-MCP-R007")
+async def test_s3_lifecycle_versioning_and_tags(mcp, monkeypatch):
+    from objectstore_mcp import auth
+
+    fake = _RecordingS3()
+    monkeypatch.setitem(auth._BACKEND_CACHE, "local", GuardedBackend(fake))
+    assert (await call(mcp, "objectstore_get_bucket_lifecycle", bucket="m"))[
+        "rules"
+    ] == []
+    await call(
         mcp,
-        "transfer",
-        "download_prefix",
-        {"bucket": "data", "prefix": "backup/", "local_dir": str(out_dir)},
+        "objectstore_put_bucket_lifecycle",
+        bucket="m",
+        rules=[
+            {"id": "scratch", "prefix": "scratch/", "expiration_days": 7},
+            {"id": "old", "prefix": "", "noncurrent_expiration_days": 30},
+        ],
     )
-    assert downloaded["count"] == 2
-    assert (out_dir / "a.txt").read_text() == "a"
-    assert (out_dir / "sub" / "b.txt").read_text() == "b"
+    s3_rules = fake.lifecycle["Rules"]
+    assert s3_rules[0]["Expiration"] == {"Days": 7}
+    assert s3_rules[1]["NoncurrentVersionExpiration"] == {"NoncurrentDays": 30}
+    got = await call(mcp, "objectstore_get_bucket_lifecycle", bucket="m")
+    assert [r["id"] for r in got["rules"]] == ["scratch", "old"]
+    await call(mcp, "objectstore_delete_bucket_lifecycle", bucket="m")
+    assert fake.lifecycle is None
+    with pytest.raises(ToolFailure, match="sets no action"):
+        await call(
+            mcp, "objectstore_put_bucket_lifecycle", bucket="m", rules=[{"id": "x"}]
+        )
+    assert (await call(mcp, "objectstore_get_bucket_versioning", bucket="m"))[
+        "status"
+    ] == "Enabled"
+    await call(mcp, "objectstore_put_bucket_versioning", bucket="m", status="Suspended")
+    assert ("versioning", "Suspended") in fake.calls
+    await call(mcp, "objectstore_put_object_tags", bucket="m", key="k", tags={"a": "1"})
+    assert (await call(mcp, "objectstore_get_object_tags", bucket="m", key="k"))[
+        "tags"
+    ] == {"a": "1"}
+    await call(mcp, "objectstore_delete_object_tags", bucket="m", key="k")
+    assert fake.tags == []
+
+
+@pytest.mark.spec("CONN-OBJECTSTORE-MCP-R005")
+def test_refusal_keeps_the_storage_cause(monkeypatch):
+    from objectstore_mcp.auth import get_client, reset_backend_cache
+
+    monkeypatch.setenv(
+        "OBJECTSTORE_STORES",
+        json.dumps({"s": {"backend": "s3", "endpoint": "http://storage.internal.example"}}),
+    )
+    monkeypatch.setenv("OBJECTSTORE_DEFAULT_STORE", "s")
+    reset_backend_cache()
+    with pytest.raises(RuntimeError, match=r"AUTHENTICATION ERROR: STORAGE_\w+: \S+"):
+        get_client()

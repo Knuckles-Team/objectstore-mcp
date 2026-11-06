@@ -3,7 +3,7 @@
 ```mermaid
 flowchart LR
     subgraph client["MCP Client / Agent"]
-        A["tool call: action + params_json + store"]
+        A["typed tool call: arguments + optional store"]
     end
 
     subgraph server["objectstore-mcp (FastMCP)"]
@@ -38,7 +38,7 @@ flowchart LR
 
 | Layer | Module | Responsibility |
 |---|---|---|
-| Tool surface | `objectstore_mcp/mcp/mcp_objectstore.py` | Action routing, parameter parsing, text/base64 encoding, **all safety enforcement** (CONCEPT:OB-OS.governance.obj-2/1.3) |
+| Tool surface | `objectstore_mcp/mcp/mcp_objectstore.py` | Typed composite, transfer, S3-management and ingest tools (CONCEPT:OB-OS.governance.obj-2); caps and delete guards live in `objectstore_mcp/guard.py` |
 | Store registry | `objectstore_mcp/config.py`, `objectstore_mcp/auth.py` | `OBJECTSTORE_STORES` parsing, default-store resolution, per-store backend cache (CONCEPT:OB-OS.config.obj) |
 | Backend protocol and backends | `scion_sdk.storage` (scion-sdk) | The provider-neutral contract, error taxonomy, store registry and the filesystem, S3-compatible, GCS, Azure and WebDAV backends; this connector ships no copy |
 

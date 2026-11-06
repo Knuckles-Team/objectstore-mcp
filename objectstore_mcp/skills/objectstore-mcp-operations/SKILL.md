@@ -2,7 +2,7 @@
 name: objectstore-mcp-operations
 skill_type: skill
 description: >-
-  Operate objectstore-mcp through its governed MCP and Arbora capabilities, including objectstore bucket administration, objectstore data transfer, objectstore object operations. Use when a request requires this provider's read, change, automation, ingestion, troubleshooting, or evidence workflows.
+  Operate objectstore-mcp through its governed MCP and Arbora capabilities, including bucket administration and lifecycle, data transfer, object operations and the business asset store. Use when a request requires this provider's read, change, automation, ingestion, troubleshooting, or evidence workflows.
 ---
 
 # Objectstore Mcp Operations
@@ -12,7 +12,7 @@ Use the provider's governed MCP tools through Arbora delegation.
 ## Workflow
 
 1. Establish the verified GraphSession and tenant before discovery or retrieval.
-2. Discover the current condensed tool surface; never assume a stale tool name or schema.
+2. Discover the current typed tool surface (one tool per operation); never assume a stale tool name or schema.
 3. Prefer read-only inspection first. For changes, present impact and use the provider's
    dry-run or preview mode when available.
 4. Execute mutations as fenced WorkItems so retries remain idempotent and auditable.

@@ -2,105 +2,65 @@
 name: objectstore-object-operations
 skill_type: skill
 description: >-
-  Object-level operations on S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a
-  local filesystem store via the objectstore-mcp MCP server — list, head, get, put,
-  copy, move, delete, presign, and tag objects with the single action-routed
-  `objects` tool. Use when the agent must read or write an object's bytes/metadata,
-  page through a bucket by prefix, mint a presigned URL, or delete objects. Do NOT
-  use for creating/deleting buckets (use objectstore-bucket-administration) or moving
-  whole files/directories to and from local disk (use objectstore-data-transfer).
+  Object-level operations through the objectstore-mcp MCP server with one typed tool per operation: list, head, get, put, copy, move, delete (single or by prefix with a dry run), presigned URLs, user metadata and object tags. Use when the agent must read or write an object, page a bucket by prefix, mint a presigned URL, tag an object, or delete objects. Do NOT use for bucket provisioning, lifecycle or versioning (objectstore-bucket-administration) or moving local files (objectstore-data-transfer).
 license: MIT
-tags: [objectstore, s3, gcs, azure-blob, minio, objects, mcp]
+tags: [objectstore, s3, objects, presign, tags, mcp]
 metadata:
   author: Knuckles-Team
-  version: '0.1.0'
+  version: '0.2.0'
 ---
 # ObjectStore Object Operations
 
-Uniform object-level access across every backend the objectstore-mcp server fronts
-(S3/MinIO/R2, GCS, Azure Blob, local filesystem). One action-routed tool, `objects`,
-carries the safety caps and encoding rules so backends stay pure storage adapters.
-
 ## When to use
-- List objects under a prefix (optionally folding at a `/` delimiter), with paging.
-- HEAD/stat a single object, or GET its bytes (size-capped, text or base64).
-- PUT an object from text or base64, optionally with `content_type` + `metadata`.
-- Copy/move an object, mint a presigned URL, or get/set an object's user metadata.
-- Delete a single object, or `delete_batch` a prefix (dry-run first).
+- List objects under a prefix (`delimiter="/"` folds folders), with `continuation_token` paging.
+- Stat, read (size-capped) or write a small object; copy or move it.
+- Mint a presigned GET or PUT URL for a handoff to another system.
+- Read or replace an object's user metadata or its tag set.
+- Delete one object, or every object under a prefix after a dry run.
 
-## When NOT to use
-- Create/delete/inspect buckets or list configured stores →
-  `objectstore-bucket-administration`.
-- Upload/download local files or whole directories/prefixes to disk →
-  `objectstore-data-transfer`.
-- Mirror object/bucket metadata into the knowledge graph → the `objectstore_ingest`
-  tool (see **Related**).
+## Tools
+| Operation | Tool | Key parameters |
+|-----------|------|----------------|
+| List | `objectstore_list_objects` | `bucket`, `prefix`, `delimiter`, `max_keys`, `continuation_token` |
+| Stat | `objectstore_head_object` | `bucket`, `key` |
+| Read | `objectstore_get_object` | `bucket`, `key`, `max_bytes` (clamped to the cap) |
+| Write | `objectstore_put_object` | `bucket`, `key`, `data`, `content_type`, `metadata` |
+| Copy | `objectstore_copy_object` | `src_bucket`, `src_key`, `dst_bucket`, `dst_key` |
+| Move | `objectstore_move_object` | as copy, plus optional `store` |
+| Delete one | `objectstore_delete_object` | `bucket`, `key`, `confirm` (no wildcards) |
+| Delete by prefix | `objectstore_delete_objects_by_prefix` | `bucket`, `prefix`, `dry_run` (default true), `max_keys` |
+| Presigned URL | `objectstore_presigned_url` | `bucket`, `key`, `method` GET/PUT, `expires_in` seconds |
+| Metadata | `objectstore_get_object_metadata` / `objectstore_set_object_metadata` | `bucket`, `key`, `metadata` |
+| Tags | `objectstore_get_object_tags` / `objectstore_put_object_tags` / `objectstore_delete_object_tags` | `bucket`, `key`, `tags` (at most 10) |
+
+The per-operation tools act on the default store; the composite and tag tools take an
+optional `store`.
+
+## Workflow
+1. `objectstore_list_objects` or `objectstore_head_object` to confirm the object exists.
+2. Make the change. For a prefix delete, run `objectstore_delete_objects_by_prefix`
+   with `dry_run=true`, show the matched keys, then rerun with `dry_run=false`.
+3. Verify with `objectstore_head_object` or `objectstore_get_object_tags`.
+4. Report each key changed with its etag.
 
 ## Prerequisites & environment
-Connect via the `mcp-client` skill against the **`objectstore-mcp`** MCP server.
+Connect to the **`objectstore-mcp`** MCP server (directly, or through the fleet gateway).
 Stores come from `OBJECTSTORE_STORES` (JSON); a zero-infra `local` filesystem store
-always exists. Credentials resolve through each provider's own chain — none are read
-by the server.
+always exists. Store credentials are secret references in each store's `credentials`
+map; the server never reads an ambient provider chain. The caller's identity must hold
+`objectstore:<store>` or `objectstore:admin` to reach a store.
 
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `OBJECTSTORE_STORES` | optional | JSON map of named stores → backend + settings |
-| `OBJECTSTORE_DEFAULT_STORE` | optional | Store used when `store` is omitted |
-| `OBJECTSTORE_FS_ROOT` | optional | Root for the always-on `local` store |
-| `OBJECTSTORE_MAX_GET_BYTES` / `OBJECTSTORE_MAX_PUT_BYTES` | optional | Read/write size caps |
-| `OBJECTSTORE_MAX_LIST_KEYS` / `OBJECTSTORE_MAX_BATCH_KEYS` | optional | List/batch caps |
-| `OBJECTSTORE_ALLOW_DELETE` | optional | Master switch for object deletes (default true) |
-| S3: `AWS_*` / profile · GCS: `GOOGLE_APPLICATION_CREDENTIALS` · Azure: `AZURE_STORAGE_CONNECTION_STRING` | per-backend | Provider SDK credential chains |
+| Variable | Notes |
+|----------|-------|
+| `OBJECTSTORE_STORES` | JSON map of named stores: backend, endpoint, `allowed_private_hosts`, `credentials` refs |
+| `OBJECTSTORE_DEFAULT_STORE` | Store used when `store` is omitted (the per-operation tools always use it) |
+| `OBJECTSTORE_MAX_GET_BYTES` / `OBJECTSTORE_MAX_PUT_BYTES` / `OBJECTSTORE_MAX_TRANSFER_BYTES` | Size caps |
+| `OBJECTSTORE_MAX_LIST_KEYS` / `OBJECTSTORE_MAX_BATCH_KEYS` | List and batch caps |
+| `OBJECTSTORE_ALLOW_DELETE` / `OBJECTSTORE_ALLOW_BUCKET_DELETE` | Delete switches (bucket deletes default off) |
 
-## Tools & actions
-| Tool | Actions |
-|------|---------|
-| `objects` | `list`, `head`, `get`, `put`, `copy`, `move`, `delete`, `delete_batch`, `presign`, `metadata_get`, `metadata_set` |
-
-Each call takes `action`, a `params_json` **JSON string**, and optional `store`.
-
-### Key parameters
-- `bucket` — target bucket (falls back to the store's default bucket for reads/writes,
-  but NOT for deletes).
-- `key` — object key. `get` also takes `mode` (`auto`|`text`|`base64`) and `max_bytes`.
-- `put` — `text` OR `content_base64` (not both), plus optional `content_type`,
-  `metadata`.
-- `copy`/`move` — `dest_bucket` (defaults to `bucket`) + `dest_key`.
-- `delete` — requires explicit `bucket` AND `key`, no wildcards.
-- `delete_batch` — explicit `bucket` + non-empty `prefix`, `dry_run` defaults `true`.
-
-## Recipes (`params_json`)
-List a prefix, folding at `/`:
-```json
-{"bucket":"media-prod","prefix":"logs/","delimiter":"/","max_keys":100}
-```
-Get an object as text:
-```json
-{"bucket":"media-prod","key":"logs/app.log","mode":"text","max_bytes":1048576}
-```
-Put a small JSON object with a content type:
-```json
-{"bucket":"media-prod","key":"config/app.json","text":"{\"on\":true}","content_type":"application/json"}
-```
-Dry-run a prefix delete before committing:
-```json
-{"bucket":"media-prod","prefix":"tmp/","max_keys":50,"dry_run":true}
-```
-
-## Gotchas
-- `params_json` is a **string** of JSON, not an object — serialize it.
-- `delete` needs an explicit `bucket` AND `key` with no `*`/`?`; store default buckets
-  do not apply to deletes. Use `delete_batch` for prefixes.
-- `delete_batch` is `dry_run:true` by default and returns the matched keys — review
-  them, then re-send with `dry_run:false`.
-- `get`/`put` are size-capped (`OBJECTSTORE_MAX_GET_BYTES`/`_PUT_BYTES`); large payloads
-  belong to `objectstore-data-transfer`.
-- `presign` and object metadata are backend capabilities — the local filesystem raises
-  `UnsupportedOperationError`; check `buckets action=info` capabilities first.
-- `metadata_set` **replaces** user metadata, it does not merge.
-
-## Related
-- **Buckets & stores:** `objectstore-bucket-administration`.
-- **Bulk / disk transfer:** `objectstore-data-transfer`.
-- **KG ingestion:** the `objectstore_ingest` tool mirrors bucket/object *metadata*
-  into the epistemic-graph as `:Bucket`/`:Object` nodes — it never copies object bytes.
+## Refusals
+A store failure names its code: `STORAGE_NOT_FOUND`, `STORAGE_EXISTS`,
+`STORAGE_BUCKET_NOT_EMPTY`, `STORAGE_UNSUPPORTED` (for example presign or lifecycle on a
+filesystem store), `STORAGE_EGRESS_REFUSED` (endpoint not in `allowed_private_hosts`),
+`STORAGE_DEPENDENCY_MISSING`, or `not entitled` (the identity lacks the store role).
+Report the code; do not retry a refusal unchanged.

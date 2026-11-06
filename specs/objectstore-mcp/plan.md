@@ -16,7 +16,7 @@ The connector moves its storage backends to the SDK and keeps its tool layer. Th
 - **Project Type**: connector
 - **Performance Goals**: N/A, the store sets the latency
 - **Constraints**: the connector ships no backend copy; credentials arrive by reference only
-- **Scale/Scope**: 4 rows
+- **Scale/Scope**: 9 rows
 
 ## Constitution Check
 
@@ -30,6 +30,10 @@ The connector moves its storage backends to the SDK and keeps its tool layer. Th
 - `objectstore_mcp/api/__init__.py` (existing): re-exports the SDK names.
 - `objectstore_mcp/api/api_client_*.py` (deleted).
 - `tests/test_sdk_backends.py` (new, planned).
+- `objectstore_mcp/guard.py` (new): the safety governor around every backend (R006).
+- `objectstore_mcp/mcp/mcp_objectstore.py` (existing): typed tools only (R005, R007).
+- `objectstore_mcp/skills/`, `objectstore_mcp/prompts/`, `objectstore_mcp/ontology/objectstore.ttl` (existing and new content, R008).
+- `tests/test_safety.py`, `tests/test_objectstore_mcp_validation.py` (rewritten), `tests/test_surface_ontology.py` (new).
 
 ## Phase 0: Research
 
@@ -37,7 +41,7 @@ No unknowns. The SDK rows hold the backend decisions.
 
 ## Phase 1: Design
 
-The tool layer keeps its names, schemas and limits. It imports the error and value types from `scion_sdk.storage`. `load_stores` passes the parsed `OBJECTSTORE_STORES` object to `parse_stores` and adds the implicit `local` store. `get_backend` caches one backend per store name and builds it with `create_backend`. The backend tests move to the SDK; the connector keeps one routing test per backend kind.
+The tool layer keeps its limits; its surface becomes one typed tool per operation (R005), with the limits enforced by a guard around the backend so the SDK-generated tools obey them too (R006). S3-only bucket management reaches the S3 client of an `s3` store (R007). It imports the error and value types from `scion_sdk.storage`. `load_stores` passes the parsed `OBJECTSTORE_STORES` object to `parse_stores` and adds the implicit `local` store. `get_backend` caches one backend per store name and builds it with `create_backend`. The backend tests move to the SDK; the connector keeps one routing test per backend kind.
 
 Store configuration changes in the same release. A store names its secrets in a `credentials` map of references. The `profile` field and the ambient provider credential chain are removed. An operator moves each store to references before the upgrade.
 

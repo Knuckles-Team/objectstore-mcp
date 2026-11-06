@@ -85,7 +85,7 @@ def test_get_backend_caches(local_store_env):
     first, config = get_backend("local")
     second, _ = get_backend("local")
     assert first is second
-    assert isinstance(first, FilesystemBackend)
+    assert isinstance(first.inner, FilesystemBackend)
     assert config.name == "local"
 
 
@@ -115,7 +115,7 @@ def test_backend_aliases_resolve(tmp_path):
         backend = create_backend(
             StoreConfig(name="x", backend=alias, root=str(tmp_path / alias))
         )
-        assert isinstance(backend, FilesystemBackend)
+        assert isinstance(getattr(backend, "inner", backend), FilesystemBackend)
     assert BACKEND_ALIASES["minio"] == "s3"
     assert BACKEND_ALIASES["r2"] == "s3"
     assert BACKEND_ALIASES["gcp"] == "gcs"

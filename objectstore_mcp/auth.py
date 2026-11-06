@@ -6,11 +6,12 @@ credential references; no ambient provider credential chain is consulted.
 Backends are built once per store and cached for the process lifetime.
 """
 
-from scion_sdk.storage import ObjectStoreBackend, StorageError, create_backend
+from scion_sdk.storage import StorageError, create_backend
 
 from objectstore_mcp.config import StoreConfig, default_store_name, load_stores
+from objectstore_mcp.guard import GuardedBackend
 
-_BACKEND_CACHE: dict[str, ObjectStoreBackend] = {}
+_BACKEND_CACHE: dict[str, GuardedBackend] = {}
 
 
 def entitled_store_names(names: list[str]) -> list[str]:
@@ -64,12 +65,12 @@ def resolve_store(store: str | None = None) -> StoreConfig:
     return config
 
 
-def get_backend(store: str | None = None) -> tuple[ObjectStoreBackend, StoreConfig]:
-    """Return the (cached) backend and config for a named store."""
+def get_backend(store: str | None = None) -> tuple[GuardedBackend, StoreConfig]:
+    """Return the (cached) backend for a named store, behind the safety governor."""
     config = resolve_store(store)
     backend = _BACKEND_CACHE.get(config.name)
     if backend is None:
-        backend = create_backend(config)
+        backend = GuardedBackend(create_backend(config))
         _BACKEND_CACHE[config.name] = backend
     return backend, config
 
@@ -79,14 +80,21 @@ def reset_backend_cache() -> None:
     _BACKEND_CACHE.clear()
 
 
-def get_client(store: str | None = None) -> ObjectStoreBackend:
+def get_client(store: str | None = None) -> GuardedBackend:
     """Golden ``get_client()`` entry point: backend for a named store.
 
     Wraps any resolution/credential failure in
     ``RuntimeError("AUTHENTICATION ERROR: ...")`` per the connector standard.
+    The refusal keeps the cause: the SDK storage error's ``code`` and message
+    (which never carry a credential), so an egress refusal, a missing provider
+    library or an entitlement denial reads as itself (CONN-OBJECTSTORE-MCP-R005).
     """
     try:
         backend, _config = get_backend(store)
+    except StorageError as exc:
+        raise RuntimeError(f"AUTHENTICATION ERROR: {exc.code}: {exc}") from exc
+    except PermissionError as exc:
+        raise RuntimeError(f"AUTHENTICATION ERROR: not entitled: {exc}") from exc
     except Exception as exc:
         raise RuntimeError(f"AUTHENTICATION ERROR: {type(exc).__name__}") from exc
     return backend

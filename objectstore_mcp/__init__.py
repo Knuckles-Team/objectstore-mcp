@@ -1,6 +1,6 @@
 """objectstore-mcp — multi-backend object-storage API + MCP Server + A2A Agent.
 
-One MCP tool surface (objects/buckets/transfer) over S3 and S3-compatible
+One typed MCP tool surface over S3 and S3-compatible
 stores (MinIO, Cloudflare R2), Google Cloud Storage, Azure Blob Storage, and
 a zero-infra local-filesystem backend (CONCEPT:OB-OS.governance.every-provider-implements-same).
 """
@@ -14,7 +14,7 @@ connector = Connector(
     api=ObjectStoreBackend,
     get_client=get_client,
     tools="objectstore_mcp.mcp_server",
-    instructions="Object-storage MCP server - one tool surface over S3 and S3-compatible stores (MinIO/R2), Google Cloud Storage, Azure Blob, and a zero-infra local-filesystem backend. Tools: 'objects' (list/head/get/put/copy/move/delete/presign/metadata), 'buckets' (list/create/delete/exists/info/stores), 'transfer' (upload/download, single or by prefix). Named stores come from OBJECTSTORE_STORES; the 'local' filesystem store always exists.",
+    instructions="Object-storage MCP server: the durable asset store. One typed tool per operation over S3 and S3-compatible stores, Google Cloud Storage, Azure Blob, WebDAV and a local filesystem store. Buckets and objects: objectstore_list_buckets/create_bucket/delete_bucket/bucket_info, objectstore_list_objects/head_object/get_object/put_object/copy_object/delete_object, objectstore_presigned_url, metadata get/set. Guarded composites: objectstore_move_object, objectstore_delete_objects_by_prefix (dry run first), file and directory transfers. S3 management: lifecycle rules, versioning, object tags. objectstore_list_stores names the stores your identity may reach.",
 )
 
 __all__ = ["connector"]
