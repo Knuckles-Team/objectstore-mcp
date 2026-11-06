@@ -21,7 +21,9 @@ class GuardedBackend:
 
     def __init__(self, backend: Any) -> None:
         # A backend that is already guarded is not wrapped twice.
-        self._backend = backend.inner if isinstance(backend, GuardedBackend) else backend
+        self._backend = (
+            backend.inner if isinstance(backend, GuardedBackend) else backend
+        )
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._backend, name)
