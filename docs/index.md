@@ -1,7 +1,7 @@
 # objectstore-mcp
 
 The object-storage connector for the scion-sdk fleet: one MCP tool
-surface (`objects` / `buckets` / `transfer`) over S3 and S3-compatible stores
+surface (one typed tool per operation) over S3 and S3-compatible stores
 (MinIO, Cloudflare R2), Google Cloud Storage, Azure Blob Storage, and a
 zero-infra local-filesystem backend.
 

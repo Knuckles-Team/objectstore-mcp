@@ -10,7 +10,7 @@
 # hold, across S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a local filesystem
 # backend. All classes and properties live in the shared `:` (kg#) namespace; only the
 # owl:Ontology node gets the per-package IRI. Backs the objectstore-mcp tool surface
-# (objects / buckets / transfer) and its native ingestion (objectstore_ingest_bucket).
+# (one typed tool per operation) and its native ingestion (objectstore_ingest_buckets, objectstore_ingest_objects).
 #
 # NOTE: object storage IS a blob backend. This model captures typed :Object *metadata*
 # (key, size, etag, content-type, storage-class) — it deliberately does NOT copy object
@@ -19,26 +19,31 @@
 
 :ObjectStore a owl:Class ;
     rdfs:label "Object Store" ;
-    rdfs:comment "A configured named store: one backend (s3/gcs/azure/filesystem) plus its endpoint/region/root (buckets action=stores)." .
+    rdfs:comment "A configured named store: one backend (s3/gcs/azure/webdav/filesystem) plus its endpoint/region/root (objectstore_list_stores)." ;
+    rdfs:subClassOf :StorageContainer .
 
 :Bucket a owl:Class ;
     rdfs:label "Bucket" ;
-    rdfs:comment "A bucket or container that holds objects within an ObjectStore (buckets action=list/info)." .
+    rdfs:comment "A bucket or container that holds objects within an ObjectStore (objectstore_list_buckets, objectstore_bucket_info)." ;
+    rdfs:subClassOf :StorageContainer .
 
 :Object a owl:Class ;
     rdfs:label "Object" ;
-    rdfs:comment "A stored object described by its key + metadata (objects action=list/head). Metadata only — the raw bytes are NOT copied into the graph." .
+    rdfs:comment "A stored object described by its key + metadata (objectstore_list_objects, objectstore_head_object). Metadata only — the raw bytes are NOT copied into the graph." ;
+    rdfs:subClassOf :File .
 
 # --- links (owl:ObjectProperty) ---
 
 :inStore a owl:ObjectProperty ;
     rdfs:label "in store" ;
+    rdfs:subPropertyOf :partOf ;
     rdfs:comment "Links a Bucket to the ObjectStore that hosts it." ;
     rdfs:domain :Bucket ;
     rdfs:range :ObjectStore .
 
 :inBucket a owl:ObjectProperty ;
     rdfs:label "in bucket" ;
+    rdfs:subPropertyOf :partOf ;
     rdfs:comment "Links an Object to the Bucket that contains it." ;
     rdfs:domain :Object ;
     rdfs:range :Bucket .
@@ -116,3 +121,358 @@
     S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a local filesystem backend,
     federated into the scion-sdk knowledge-graph hub. Captures object METADATA
     only; object bytes stay in the backing store (or a separately-linked :Blob).""" .
+
+# --- served surface: tools, skills, prompt agent, tool-use contracts, data location ---
+# Individuals of medulla core classes (:Tool, :Skill, :Prompt, :Agent, :Task, :TaskStep,
+# :Dataset); no core import. tests/test_surface_ontology.py keeps it in step with the served tools.
+
+:tool_objectstore_list_stores a :Tool ;
+    rdfs:label "objectstore_list_stores" ;
+    rdfs:comment "List the named stores the caller is entitled to, with backend and endpoint." .
+
+:tool_objectstore_move_object a :Tool ;
+    rdfs:label "objectstore_move_object" ;
+    rdfs:comment "Move one object: copy it to dst_bucket/dst_key, then delete the source." .
+
+:tool_objectstore_delete_objects_by_prefix a :Tool ;
+    rdfs:label "objectstore_delete_objects_by_prefix" ;
+    rdfs:comment "Delete objects under a non-empty prefix (dry run by default, count-capped)." .
+
+:tool_objectstore_upload_file a :Tool ;
+    rdfs:label "objectstore_upload_file" ;
+    rdfs:comment "Upload one local file to an object (capped by OBJECTSTORE_MAX_TRANSFER_BYTES)." .
+
+:tool_objectstore_download_file a :Tool ;
+    rdfs:label "objectstore_download_file" ;
+    rdfs:comment "Download one object to a local file (capped by OBJECTSTORE_MAX_TRANSFER_BYTES)." .
+
+:tool_objectstore_upload_directory a :Tool ;
+    rdfs:label "objectstore_upload_directory" ;
+    rdfs:comment "Upload every file under a local directory to objects under a prefix (capped)." .
+
+:tool_objectstore_download_prefix a :Tool ;
+    rdfs:label "objectstore_download_prefix" ;
+    rdfs:comment "Download the objects under a prefix into a local directory (capped)." .
+
+:tool_objectstore_get_bucket_lifecycle a :Tool ;
+    rdfs:label "objectstore_get_bucket_lifecycle" ;
+    rdfs:comment "Read a bucket's lifecycle rules (empty list when none are set)." .
+
+:tool_objectstore_put_bucket_lifecycle a :Tool ;
+    rdfs:label "objectstore_put_bucket_lifecycle" ;
+    rdfs:comment "Replace a bucket's lifecycle rules (expiry, noncurrent expiry, transitions)." .
+
+:tool_objectstore_delete_bucket_lifecycle a :Tool ;
+    rdfs:label "objectstore_delete_bucket_lifecycle" ;
+    rdfs:comment "Remove every lifecycle rule from a bucket." .
+
+:tool_objectstore_get_bucket_versioning a :Tool ;
+    rdfs:label "objectstore_get_bucket_versioning" ;
+    rdfs:comment "Read a bucket's versioning state (Enabled, Suspended or unset)." .
+
+:tool_objectstore_put_bucket_versioning a :Tool ;
+    rdfs:label "objectstore_put_bucket_versioning" ;
+    rdfs:comment "Enable or suspend object versioning on a bucket." .
+
+:tool_objectstore_get_object_tags a :Tool ;
+    rdfs:label "objectstore_get_object_tags" ;
+    rdfs:comment "Read an object's tag set." .
+
+:tool_objectstore_put_object_tags a :Tool ;
+    rdfs:label "objectstore_put_object_tags" ;
+    rdfs:comment "Replace an object's tag set (at most 10 tags)." .
+
+:tool_objectstore_delete_object_tags a :Tool ;
+    rdfs:label "objectstore_delete_object_tags" ;
+    rdfs:comment "Remove every tag from an object." .
+
+:tool_objectstore_ingest_buckets a :Tool ;
+    rdfs:label "objectstore_ingest_buckets" ;
+    rdfs:comment "Mirror the store's buckets into the knowledge graph as :Bucket nodes." .
+
+:tool_objectstore_ingest_objects a :Tool ;
+    rdfs:label "objectstore_ingest_objects" ;
+    rdfs:comment "Mirror object metadata under a prefix into the knowledge graph as :Object nodes." .
+
+:tool_objectstore_bucket_exists a :Tool ;
+    rdfs:label "objectstore_bucket_exists" ;
+    rdfs:comment "Return True when the bucket exists." .
+
+:tool_objectstore_bucket_info a :Tool ;
+    rdfs:label "objectstore_bucket_info" ;
+    rdfs:comment "Describe one bucket. Raises NotFoundError when absent." .
+
+:tool_objectstore_capabilities a :Tool ;
+    rdfs:label "objectstore_capabilities" ;
+    rdfs:comment "Advertise optional capabilities." .
+
+:tool_objectstore_copy_object a :Tool ;
+    rdfs:label "objectstore_copy_object" ;
+    rdfs:comment "Server-side (where possible) copy of one object." .
+
+:tool_objectstore_create_bucket a :Tool ;
+    rdfs:label "objectstore_create_bucket" ;
+    rdfs:comment "Create a bucket. Raises AlreadyExistsError if it exists." .
+
+:tool_objectstore_delete_bucket a :Tool ;
+    rdfs:label "objectstore_delete_bucket" ;
+    rdfs:comment "Delete an EMPTY bucket. Raises BucketNotEmptyError otherwise." .
+
+:tool_objectstore_delete_object a :Tool ;
+    rdfs:label "objectstore_delete_object" ;
+    rdfs:comment "Delete exactly one object. Raises NotFoundError when absent." .
+
+:tool_objectstore_get_object a :Tool ;
+    rdfs:label "objectstore_get_object" ;
+    rdfs:comment "Download an object's bytes. Raises TooLargeError when the" .
+
+:tool_objectstore_get_object_metadata a :Tool ;
+    rdfs:label "objectstore_get_object_metadata" ;
+    rdfs:comment "Return the user metadata of one object." .
+
+:tool_objectstore_head_object a :Tool ;
+    rdfs:label "objectstore_head_object" ;
+    rdfs:comment "Stat one object without downloading it." .
+
+:tool_objectstore_list_buckets a :Tool ;
+    rdfs:label "objectstore_list_buckets" ;
+    rdfs:comment "List all buckets/containers visible to the credentials." .
+
+:tool_objectstore_list_objects a :Tool ;
+    rdfs:label "objectstore_list_objects" ;
+    rdfs:comment "List objects under ``prefix``, optionally folding at ``delimiter``." .
+
+:tool_objectstore_presigned_url a :Tool ;
+    rdfs:label "objectstore_presigned_url" ;
+    rdfs:comment "Mint a presigned URL. Raises UnsupportedOperationError when the" .
+
+:tool_objectstore_put_object a :Tool ;
+    rdfs:label "objectstore_put_object" ;
+    rdfs:comment "Upload bytes to ``bucket/key`` (overwrites)." .
+
+:tool_objectstore_set_object_metadata a :Tool ;
+    rdfs:label "objectstore_set_object_metadata" ;
+    rdfs:comment "Replace the user metadata of one object." .
+
+:skill_objectstore_object_operations a :Skill ;
+    rdfs:label "objectstore-object-operations" ;
+    :usesTool :tool_objectstore_list_objects,
+        :tool_objectstore_head_object,
+        :tool_objectstore_get_object,
+        :tool_objectstore_put_object,
+        :tool_objectstore_copy_object,
+        :tool_objectstore_move_object,
+        :tool_objectstore_delete_object,
+        :tool_objectstore_delete_objects_by_prefix,
+        :tool_objectstore_presigned_url,
+        :tool_objectstore_get_object_metadata,
+        :tool_objectstore_set_object_metadata,
+        :tool_objectstore_get_object_tags,
+        :tool_objectstore_put_object_tags,
+        :tool_objectstore_delete_object_tags .
+
+:skill_objectstore_bucket_administration a :Skill ;
+    rdfs:label "objectstore-bucket-administration" ;
+    :usesTool :tool_objectstore_list_stores,
+        :tool_objectstore_list_buckets,
+        :tool_objectstore_create_bucket,
+        :tool_objectstore_bucket_exists,
+        :tool_objectstore_bucket_info,
+        :tool_objectstore_capabilities,
+        :tool_objectstore_delete_bucket,
+        :tool_objectstore_get_bucket_lifecycle,
+        :tool_objectstore_put_bucket_lifecycle,
+        :tool_objectstore_delete_bucket_lifecycle,
+        :tool_objectstore_get_bucket_versioning,
+        :tool_objectstore_put_bucket_versioning .
+
+:skill_objectstore_data_transfer a :Skill ;
+    rdfs:label "objectstore-data-transfer" ;
+    :usesTool :tool_objectstore_upload_file,
+        :tool_objectstore_download_file,
+        :tool_objectstore_upload_directory,
+        :tool_objectstore_download_prefix,
+        :tool_objectstore_bucket_exists,
+        :tool_objectstore_list_objects .
+
+:skill_objectstore_business_asset_store a :Skill ;
+    rdfs:label "objectstore-business-asset-store" ;
+    :usesTool :tool_objectstore_list_stores,
+        :tool_objectstore_list_buckets,
+        :tool_objectstore_create_bucket,
+        :tool_objectstore_put_bucket_versioning,
+        :tool_objectstore_get_bucket_versioning,
+        :tool_objectstore_put_bucket_lifecycle,
+        :tool_objectstore_get_bucket_lifecycle,
+        :tool_objectstore_put_object,
+        :tool_objectstore_upload_file,
+        :tool_objectstore_put_object_tags,
+        :tool_objectstore_get_object_tags,
+        :tool_objectstore_head_object,
+        :tool_objectstore_list_objects,
+        :tool_objectstore_presigned_url,
+        :tool_objectstore_ingest_objects .
+
+:skill_objectstore_mcp_operations a :Skill ;
+    rdfs:label "objectstore-mcp-operations" ;
+    :usesTool :tool_objectstore_list_stores,
+        :tool_objectstore_capabilities,
+        :tool_objectstore_ingest_buckets,
+        :tool_objectstore_ingest_objects .
+
+:prompt_objectstore_asset_librarian a :Prompt ;
+    rdfs:label "objectstore_asset_librarian" .
+
+:agent_objectstore_asset_librarian a :Agent ;
+    rdfs:label "Asset Librarian" ;
+    rdfs:comment "Business-role agent: keeps business media filed, tagged, retained and handed off from the object store." ;
+    :hasPrompt :prompt_objectstore_asset_librarian ;
+    :hasSkill :skill_objectstore_business_asset_store, :skill_objectstore_object_operations, :skill_objectstore_bucket_administration ;
+    :orchestrationUsesTool :tool_objectstore_list_stores,
+        :tool_objectstore_list_buckets,
+        :tool_objectstore_list_objects,
+        :tool_objectstore_head_object,
+        :tool_objectstore_put_object,
+        :tool_objectstore_upload_file,
+        :tool_objectstore_get_object_tags,
+        :tool_objectstore_put_object_tags,
+        :tool_objectstore_presigned_url,
+        :tool_objectstore_get_bucket_lifecycle,
+        :tool_objectstore_put_bucket_lifecycle,
+        :tool_objectstore_get_bucket_versioning,
+        :tool_objectstore_put_bucket_versioning,
+        :tool_objectstore_ingest_objects .
+
+:task_objectstore_provision_asset_buckets a :Task ;
+    rdfs:label "objectstore-provision-asset-buckets" ;
+    rdfs:comment "Tool-use contract. Provision the business asset buckets with versioning and retention." ;
+    :hasStep :task_objectstore_provision_asset_buckets_step1, :task_objectstore_provision_asset_buckets_step2, :task_objectstore_provision_asset_buckets_step3, :task_objectstore_provision_asset_buckets_step4, :task_objectstore_provision_asset_buckets_step5 .
+
+:task_objectstore_provision_asset_buckets_step1 a :TaskStep ;
+    rdfs:label "1. objectstore_list_buckets" ;
+    :usesTool :tool_objectstore_list_buckets ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_provision_asset_buckets_step2 .
+
+:task_objectstore_provision_asset_buckets_step2 a :TaskStep ;
+    rdfs:label "2. objectstore_create_bucket" ;
+    :usesTool :tool_objectstore_create_bucket ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_provision_asset_buckets_step3 .
+
+:task_objectstore_provision_asset_buckets_step3 a :TaskStep ;
+    rdfs:label "3. objectstore_put_bucket_versioning" ;
+    :usesTool :tool_objectstore_put_bucket_versioning ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_provision_asset_buckets_step4 .
+
+:task_objectstore_provision_asset_buckets_step4 a :TaskStep ;
+    rdfs:label "4. objectstore_put_bucket_lifecycle" ;
+    :usesTool :tool_objectstore_put_bucket_lifecycle ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_provision_asset_buckets_step5 .
+
+:task_objectstore_provision_asset_buckets_step5 a :TaskStep ;
+    rdfs:label "5. objectstore_get_bucket_lifecycle" ;
+    :usesTool :tool_objectstore_get_bucket_lifecycle ;
+    :needsSkill :skill_objectstore_business_asset_store .
+
+:task_objectstore_file_asset a :Task ;
+    rdfs:label "objectstore-file-asset" ;
+    rdfs:comment "Tool-use contract. File one business asset and tag its stage." ;
+    :hasStep :task_objectstore_file_asset_step1, :task_objectstore_file_asset_step2, :task_objectstore_file_asset_step3 .
+
+:task_objectstore_file_asset_step1 a :TaskStep ;
+    rdfs:label "1. objectstore_put_object" ;
+    :usesTool :tool_objectstore_put_object ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_file_asset_step2 .
+
+:task_objectstore_file_asset_step2 a :TaskStep ;
+    rdfs:label "2. objectstore_put_object_tags" ;
+    :usesTool :tool_objectstore_put_object_tags ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_file_asset_step3 .
+
+:task_objectstore_file_asset_step3 a :TaskStep ;
+    rdfs:label "3. objectstore_head_object" ;
+    :usesTool :tool_objectstore_head_object ;
+    :needsSkill :skill_objectstore_business_asset_store .
+
+:task_objectstore_hand_off_asset a :Task ;
+    rdfs:label "objectstore-hand-off-asset" ;
+    rdfs:comment "Tool-use contract. Hand an asset to the review or publishing step by presigned URL, then record the new stage." ;
+    :hasStep :task_objectstore_hand_off_asset_step1, :task_objectstore_hand_off_asset_step2, :task_objectstore_hand_off_asset_step3, :task_objectstore_hand_off_asset_step4 .
+
+:task_objectstore_hand_off_asset_step1 a :TaskStep ;
+    rdfs:label "1. objectstore_list_objects" ;
+    :usesTool :tool_objectstore_list_objects ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_hand_off_asset_step2 .
+
+:task_objectstore_hand_off_asset_step2 a :TaskStep ;
+    rdfs:label "2. objectstore_get_object_tags" ;
+    :usesTool :tool_objectstore_get_object_tags ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_hand_off_asset_step3 .
+
+:task_objectstore_hand_off_asset_step3 a :TaskStep ;
+    rdfs:label "3. objectstore_presigned_url" ;
+    :usesTool :tool_objectstore_presigned_url ;
+    :needsSkill :skill_objectstore_business_asset_store ;
+    :precedes :task_objectstore_hand_off_asset_step4 .
+
+:task_objectstore_hand_off_asset_step4 a :TaskStep ;
+    rdfs:label "4. objectstore_put_object_tags" ;
+    :usesTool :tool_objectstore_put_object_tags ;
+    :needsSkill :skill_objectstore_business_asset_store .
+
+:task_objectstore_delete_prefix a :Task ;
+    rdfs:label "objectstore-delete-prefix" ;
+    rdfs:comment "Tool-use contract. Delete the objects under a prefix after a dry run." ;
+    :hasStep :task_objectstore_delete_prefix_step1, :task_objectstore_delete_prefix_step2, :task_objectstore_delete_prefix_step3 .
+
+:task_objectstore_delete_prefix_step1 a :TaskStep ;
+    rdfs:label "1. objectstore_delete_objects_by_prefix" ;
+    :usesTool :tool_objectstore_delete_objects_by_prefix ;
+    :needsSkill :skill_objectstore_object_operations ;
+    :precedes :task_objectstore_delete_prefix_step2 .
+
+:task_objectstore_delete_prefix_step2 a :TaskStep ;
+    rdfs:label "2. objectstore_delete_objects_by_prefix" ;
+    :usesTool :tool_objectstore_delete_objects_by_prefix ;
+    :needsSkill :skill_objectstore_object_operations ;
+    :precedes :task_objectstore_delete_prefix_step3 .
+
+:task_objectstore_delete_prefix_step3 a :TaskStep ;
+    rdfs:label "3. objectstore_list_objects" ;
+    :usesTool :tool_objectstore_list_objects ;
+    :needsSkill :skill_objectstore_object_operations .
+
+:task_objectstore_mirror_metadata a :Task ;
+    rdfs:label "objectstore-mirror-metadata" ;
+    rdfs:comment "Tool-use contract. Mirror bucket and object metadata into the knowledge graph." ;
+    :hasStep :task_objectstore_mirror_metadata_step1, :task_objectstore_mirror_metadata_step2 .
+
+:task_objectstore_mirror_metadata_step1 a :TaskStep ;
+    rdfs:label "1. objectstore_ingest_buckets" ;
+    :usesTool :tool_objectstore_ingest_buckets ;
+    :needsSkill :skill_objectstore_mcp_operations ;
+    :precedes :task_objectstore_mirror_metadata_step2 .
+
+:task_objectstore_mirror_metadata_step2 a :TaskStep ;
+    rdfs:label "2. objectstore_ingest_objects" ;
+    :usesTool :tool_objectstore_ingest_objects ;
+    :needsSkill :skill_objectstore_mcp_operations .
+
+:dataset_objectstore_objects a :Dataset ;
+    rdfs:label "objectstore-objects" ;
+    rdfs:comment """Data location and routing: object bytes and metadata live in the backing store
+    named by a tool call's store argument, resolved from OBJECTSTORE_STORES (default
+    OBJECTSTORE_DEFAULT_STORE); the knowledge graph holds :ObjectStore/:Bucket/:Object
+    metadata only, federated by live reads (objectstore_list_objects) and mirrored by
+    objectstore_ingest_buckets / objectstore_ingest_objects. Bytes are never copied.""" ;
+    :storedIn :store_objectstore_default .
+
+:store_objectstore_default a :ObjectStore ;
+    rdfs:label "default object store (OBJECTSTORE_DEFAULT_STORE)" .

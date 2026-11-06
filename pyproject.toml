@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objectstore-mcp"
-version = "2.4.0"
+version = "2.5.0"
 description = "Object storage (S3/MinIO/R2, Google Cloud Storage, Azure Blob, local filesystem) API + MCP Server for Agentic AI!"
 readme = "README.md"
 classifiers = [ "Development Status :: 4 - Beta", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12"
-dependencies = [ "scion-sdk[mcp]>=0.8.0,<0.9", "python-dotenv>=1.2.4",]
+dependencies = [ "scion-sdk[mcp]>=0.8.2,<0.9", "python-dotenv>=1.2.4",]
 [[project.authors]]
 name = "Repository Maintainers"
 email = "maintainers@knuckles.team"
@@ -18,10 +18,10 @@ email = "maintainers@knuckles.team"
 text = "MIT"
 
 [project.optional-dependencies]
-s3 = [ "scion-sdk[storage-s3]>=0.8.0,<0.9",]
-gcs = [ "scion-sdk[storage-gcs]>=0.8.0,<0.9",]
-azure = [ "scion-sdk[storage-azure]>=0.8.0,<0.9",]
-all = [ "objectstore-mcp[s3,gcs,azure]>=1.0.1",]
+s3 = [ "scion-sdk[storage-s3]>=0.8.2,<0.9",]
+gcs = [ "scion-sdk[storage-gcs]>=0.8.2,<0.9",]
+azure = [ "scion-sdk[storage-azure]>=0.8.2,<0.9",]
+all = [ "objectstore-mcp[s3,gcs,azure]",]
 test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
 
 [project.scripts]
@@ -74,4 +74,5 @@ exempt = ["specs/*", "specs/**/*"]
 
 [tool.pipelines.container]
 debug_apt = ["default-jre", "ripgrep", "tree", "fd-find", "curl", "nano", "build-essential", "cmake", "libssl-dev", "libcurl4-openssl-dev", "pkg-config", "cargo", "rustc"]
-install_extras = {"mcp" = []}
+# The served image carries every provider library (CONN-OBJECTSTORE-MCP-R002.1).
+install_extras = {"mcp" = ["s3", "gcs", "azure"]}

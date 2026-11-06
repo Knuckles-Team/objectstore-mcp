@@ -56,7 +56,7 @@ def test_development_skill_has_real_delivery_contract_and_actual_tests():
         "OBJECTSTORE_FS_ROOT",
         "ObjectStoreBackend",
         "scion-sdk",
-        "condensed/verbose",
+        "Never add an `action`-routed tool",
     ):
         assert runtime_name in content
 

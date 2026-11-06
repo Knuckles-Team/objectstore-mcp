@@ -4,7 +4,7 @@ skill_type: skill
 domain: development
 description: >-
   Develop, test, gate, and release the objectstore-mcp connector. Use this skill
-  when changing object-storage backends, action-routed MCP tools, connector
+  when changing object-storage backends, typed MCP tools, connector
   content, packaging, documentation, or repository gates.
 license: MIT
 tags: [objectstore, development, connector, test, gates]
@@ -16,8 +16,8 @@ metadata:
 
 # objectstore-mcp development
 
-This repository owns the object-storage backends, safety-governed action-routed
-MCP tools, connector content, and source declarations for S3-compatible stores,
+This repository owns the object-storage backends, safety-governed typed MCP
+tools, connector content, and source declarations for S3-compatible stores,
 GCS, Azure Blob, and the local filesystem backend. Shared MCP contracts,
 transports, and source-ingest clients belong to `scion-sdk`;
 admission, serving, and durable graph state belong to their owning repositories.
@@ -32,12 +32,14 @@ owning spec row in the commit trailer.
 
 - Find the owning row first with `git grep -n "<term>" -- specs`; extend the
   existing spec before adding requirement text.
-- Reuse the SDK `Connector`, the existing backend protocol, and the action-routed
-  `objects`, `buckets`, and `transfer` tools. Do not create a second connector
-  entry point, transport, graph-write path, or parallel safety policy.
+- Reuse the SDK `Connector` and the backend protocol: the SDK generates one tool
+  per `ObjectStoreBackend` method; `objectstore_mcp/mcp/mcp_objectstore.py` adds one
+  typed tool per extra operation. Never add an `action`-routed tool. Do not create a
+  second connector entry point, transport, graph-write path, or parallel safety policy.
 - Keep provider SDK imports lazy and preserve the `ObjectStoreBackend` conformance
-  contract. Safety caps, delete guards, and dry-run behavior remain in
-  `objectstore_mcp/mcp/mcp_objectstore.py`, not in provider adapters.
+  contract. Safety caps and delete guards live in
+  `objectstore_mcp/guard.py` (the wrapper every tool's backend goes through) and the
+  dry-run behavior in `objectstore_mcp/mcp/mcp_objectstore.py`, not in provider adapters.
 - Bind delivered behavior to a focused test. Generated `specs/*/status.json`
   files come from the shared hooks; never hand-edit them.
 - Keep `skills/**`, `ontology/**`, `connectors/**`, prompts, and manifest content
@@ -63,9 +65,8 @@ uv run --locked --extra test pytest tests/test_auth.py tests/test_api_wrapper.py
 
 Tests use the filesystem backend and temporary directories. Do not call a live
 cloud provider or require credentials in local gates. `OBJECTSTORE_STORES`,
-`OBJECTSTORE_DEFAULT_STORE`, `OBJECTSTORE_FS_ROOT`, and the provider SDK
-credential chains are runtime inputs. Preserve the condensed/verbose SDK tool
-modes, TLS and auth delegation, explicit bucket/delete checks, size/key caps,
+`OBJECTSTORE_DEFAULT_STORE`, `OBJECTSTORE_FS_ROOT`, and the store credential
+references are runtime inputs. Preserve the SDK tool modes, TLS and auth delegation, explicit bucket/delete checks, size/key caps,
 and ontology/source mappings when changing backend or tool modules.
 
 ## Packaging and publication

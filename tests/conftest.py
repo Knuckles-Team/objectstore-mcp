@@ -41,3 +41,48 @@ def local_store_env(tmp_path, monkeypatch):
     root = tmp_path / "local-store"
     monkeypatch.setenv("OBJECTSTORE_FS_ROOT", str(root))
     return root
+
+
+@pytest.fixture
+def mcp(local_store_env):
+    """The served tool surface: SDK per-operation tools plus the typed tools."""
+    from scion_sdk._connector_serve import build_server
+
+    _args, server = build_server("objectstore_mcp", command_args=[])
+    return server
+
+
+def tool_payload(result):
+    """A tool result as plain data (structured content or decoded text)."""
+    import json
+
+    if getattr(result, "data", None) is not None:
+        return result.data
+    if getattr(result, "structured_content", None) is not None:
+        return result.structured_content
+    if not result.content:
+        return None
+    text = result.content[0].text
+    try:
+        return json.loads(text)
+    except ValueError:
+        return text
+
+
+async def call_tool(server, tool, **arguments):
+    """Call one tool over the in-memory client and return its payload."""
+    from fastmcp import Client
+
+    async with Client(server) as client:
+        return tool_payload(await client.call_tool(tool, arguments))
+
+
+def _tool_failures():
+    from fastmcp.exceptions import ToolError
+    from mcp.shared.exceptions import MCPError
+
+    return (ToolError, MCPError)
+
+
+#: A refused tool call surfaces as either error type over the in-memory client.
+ToolFailure = _tool_failures()

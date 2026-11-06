@@ -16,9 +16,9 @@ tool layer.
 This project follows the standardized agent-package pattern:
 
 - **Modular Design**: split into `api/` (provider client modules implementing
-  the `ObjectStoreBackend` protocol) and `mcp/` (action-routed tool modules)
+  the `ObjectStoreBackend` protocol) and `mcp/` (typed tool modules)
   for cleaner organization.
-- **Dynamic Tool Registration**: action-routed dynamic tool tags, strictly
+- **Dynamic Tool Registration**: typed tool tags, strictly
   lowercase, each togglable with a `*TOOL` environment flag (`OBJECTSTORETOOL`).
 - **A2A Agent Server**: a Pydantic-AI graph agent (console script
   `objectstore-agent`) that calls the MCP tool surface and exposes an AG-UI

@@ -19,7 +19,7 @@ Tool-neutral rules for any AI agent or human working in this repository. This bl
 - `objectstore_mcp/`: Main server code
   - `api/`: One client module per provider (`api_client_{filesystem,s3,gcs,azure_blob}.py`),
     all implementing the `ObjectStoreBackend` protocol in `api/api_client_base.py` (CONCEPT:OB-OS.governance.every-provider-implements-same)
-  - `mcp/mcp_objectstore.py`: The action-routed tool surface and the **only**
+  - `mcp/mcp_objectstore.py`: The typed composite/transfer/S3-management tools; `guard.py` is the **only**
     place safety policy (caps, remove flags, dry-run) is enforced
   - `config.py` / `auth.py`: Named-store registry, backend cache, and `get_client()`
 - `tests/`: Test suite (`test_sdk_backends.py` proves every store runs through the SDK backends; the protocol conformance suite lives in scion-sdk `tests/storage/`)
