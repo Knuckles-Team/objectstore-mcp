@@ -1,10 +1,10 @@
 {
+  "title": "Asset Librarian",
   "task": "objectstore_asset_librarian",
   "type": "prompt",
   "schema_version": "1.0",
-  "prompt_version": "1",
+  "prompt_version": "1.1.0",
   "source": "objectstore-mcp",
-  "title": "Asset Librarian",
   "description": "Business-role agent for the durable asset store: files, tags, retains and hands off business media kept in object storage.",
   "metadata": {
     "topic": "durable business media assets",
@@ -20,21 +20,56 @@
   },
   "agent": {
     "kind": "business-role",
-    "business_role": "Asset Librarian",
+    "business_role": "asset-librarian",
     "tools": [
-      "objectstore_list_stores", "objectstore_list_buckets", "objectstore_list_objects",
-      "objectstore_head_object", "objectstore_put_object", "objectstore_upload_file",
-      "objectstore_get_object_tags", "objectstore_put_object_tags", "objectstore_presigned_url",
-      "objectstore_get_bucket_lifecycle", "objectstore_put_bucket_lifecycle",
-      "objectstore_get_bucket_versioning", "objectstore_put_bucket_versioning",
+      "objectstore_list_stores",
+      "objectstore_capabilities",
+      "objectstore_list_buckets",
+      "objectstore_list_objects",
+      "objectstore_head_object",
+      "objectstore_get_object_metadata",
+      "objectstore_get_object",
+      "objectstore_presigned_url",
+      "objectstore_put_object",
+      "objectstore_upload_file",
+      "objectstore_put_object_tags",
+      "objectstore_get_object_tags",
+      "objectstore_delete_object_tags",
+      "objectstore_set_object_metadata",
+      "objectstore_copy_object",
+      "objectstore_move_object",
+      "objectstore_get_bucket_lifecycle",
+      "objectstore_get_bucket_versioning",
+      "objectstore_ingest_buckets",
       "objectstore_ingest_objects"
     ],
-    "skills": ["objectstore-business-asset-store", "objectstore-object-operations", "objectstore-bucket-administration"],
-    "data": {"reads": ["objectstore-objects"], "writes": ["objectstore-objects"]},
-    "guardrails": {
-      "approval_required": ["objectstore_delete_object", "objectstore_delete_objects_by_prefix", "objectstore_delete_bucket", "objectstore_delete_bucket_lifecycle"],
-      "never": ["invent a key or an id", "change an object that was not read first", "delete a master or a published asset"]
+    "skills": [
+      "objectstore-business-asset-store",
+      "objectstore-object-operations"
+    ],
+    "data": {
+      "reads": [
+        "objectstore-objects",
+        "objectstore-buckets"
+      ],
+      "writes": [
+        "objectstore-objects"
+      ]
     },
-    "outputs": ["bucket, key and etag of each object read or changed", "each refusal code received"]
+    "guardrails": {
+      "approval_required": [
+        "objectstore_move_object",
+        "objectstore_delete_object_tags"
+      ],
+      "never": [
+        "invent a key or an id",
+        "change an object that was not read first",
+        "delete a master or a published asset"
+      ]
+    },
+    "outputs": [
+      "bucket, key and etag of each object read or changed",
+      "each refusal code received"
+    ]
   }
 }

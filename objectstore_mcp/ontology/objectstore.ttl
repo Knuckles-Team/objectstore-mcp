@@ -323,6 +323,24 @@
 :prompt_objectstore_asset_librarian a :Prompt ;
     rdfs:label "objectstore_asset_librarian" .
 
+:prompt_objectstore_operator a :Prompt ;
+    rdfs:label "objectstore-operator" .
+
+:prompt_objectstore_storage_administrator a :Prompt ;
+    rdfs:label "objectstore-storage-administrator" .
+
+:agent_objectstore_operator a :Agent ;
+    rdfs:label "Object store operator" ;
+    rdfs:comment "Operator agent: routes requests to the asset-librarian or storage-administrator workflow." ;
+    :hasPrompt :prompt_objectstore_operator ;
+    :hasSkill :skill_objectstore_business_asset_store, :skill_objectstore_object_operations, :skill_objectstore_bucket_administration, :skill_objectstore_data_transfer, :skill_objectstore_mcp_operations .
+
+:agent_objectstore_storage_administrator a :Agent ;
+    rdfs:label "Storage administrator" ;
+    rdfs:comment "Business-role agent: provisions buckets, retention and versioning, moves bulk data and removes data with approval." ;
+    :hasPrompt :prompt_objectstore_storage_administrator ;
+    :hasSkill :skill_objectstore_bucket_administration, :skill_objectstore_data_transfer, :skill_objectstore_object_operations .
+
 :agent_objectstore_asset_librarian a :Agent ;
     rdfs:label "Asset Librarian" ;
     rdfs:comment "Business-role agent: keeps business media filed, tagged, retained and handed off from the object store." ;
