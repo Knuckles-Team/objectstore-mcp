@@ -13,3 +13,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 - [ ] T007 [US3] CONN-OBJECTSTORE-MCP-R006 The safety governor wraps every tool's backend.
 - [ ] T008 [US4] CONN-OBJECTSTORE-MCP-R007 Manage S3 bucket lifecycle, versioning and object tags.
 - [ ] T009 [US4] CONN-OBJECTSTORE-MCP-R008 Package the complete surface.
+- [ ] T010 [US1] CONN-OBJECTSTORE-MCP-R009 Adopt scion-sdk 0.10.0 import paths. Size: S, 1 PR, 30 minutes.

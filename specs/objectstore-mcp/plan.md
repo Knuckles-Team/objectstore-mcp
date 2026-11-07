@@ -45,6 +45,16 @@ The tool layer keeps its limits; its surface becomes one typed tool per operatio
 
 Store configuration changes in the same release. A store names its secrets in a `credentials` map of references. The `profile` field and the ambient provider credential chain are removed. An operator moves each store to references before the upgrade.
 
+### Adoption of scion-sdk 0.10.0 (CONN-OBJECTSTORE-MCP-R009)
+
+- Owner. This repository, the import lines named in `CONN-OBJECTSTORE-MCP-R009`. The paths belong to scion-sdk.
+- Cohesion. The import edits, the pin and the lock change together and sit in one change.
+- Dependency direction. The connector imports public modules of the SDK units; no import points to a private module.
+- Interface depth. The connector uses the public surface only.
+- Special cases. None. Every removed path takes the same replacement, with no alias.
+- State. None.
+- Environment. None. The pin is package metadata, not environment code.
+
 ## Phase 2: Task approach
 
 Pin the SDK first (R002), then switch the backends (R001), then add the WebDAV routing test (R003). R004 has no order.
