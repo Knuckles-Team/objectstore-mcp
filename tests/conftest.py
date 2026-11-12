@@ -46,7 +46,7 @@ def local_store_env(tmp_path, monkeypatch):
 @pytest.fixture
 def mcp(local_store_env):
     """The served tool surface: SDK per-operation tools plus the typed tools."""
-    from scion_sdk._connector_serve import build_server
+    from scion_sdk.connector import build_server
 
     _args, server = build_server("objectstore_mcp", command_args=[])
     return server

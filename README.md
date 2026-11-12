@@ -116,7 +116,7 @@ Pick the extra that matches what the operator want to run (provider extras are a
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `objectstore-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
+| `objectstore-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `medulla[full]`) | The operator only run the **MCP server** (smallest install / image) |
 | `objectstore-mcp[all]` | Everything (`mcp` + `agent` + `s3` + `gcs` + `azure` + `logfire`) | Development / both surfaces |
 
 ```bash
@@ -134,7 +134,7 @@ One multi-stage `docker/Dockerfile` builds the MCP-only image (`--target mcp`):
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
-| `example/objectstore-mcp:mcp` | `--target mcp` | `objectstore-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `objectstore-mcp` |
+| `example/objectstore-mcp:mcp` | `--target mcp` | `objectstore-mcp[mcp]` — **connector-focused**, includes `medulla[full]`; no model-orchestration stack | `objectstore-mcp` |
 
 ```bash
 docker build --target mcp   -t example/objectstore-mcp:mcp    docker/   # connector-focused MCP server
@@ -149,17 +149,17 @@ docker pull example/objectstore-mcp@sha256:<digest>   # agent runtime (default)
 
 > The `:mcp` tag is the **MCP-serving image** (built from
 > `docker/Dockerfile --target mcp`, installing `objectstore-mcp[mcp]`). The default
-> which also bundles the Pydantic AI agent and the epistemic-graph engine — use it
+> which also bundles the Pydantic AI agent and the medulla engine — use it
 > when the operator run `objectstore-agent` (the agent), not just the MCP server.
 
-### Knowledge-graph database (`epistemic-graph`)
+### Knowledge-graph database (`medulla`)
 
-Scion SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
+Scion SDK core dependency (`medulla[full]`). The `[mcp]` extra keeps
 deployments can use the bundled engine. For production or shared state, run
-**epistemic-graph as a dedicated database service** and configure the runtime to use it.
+**medulla as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
 diagrams are documented in the
-[epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
+[medulla deployment guide](https://knuckles-team.github.io/medulla/deployment/).
 
 ## Configuration (environment)
 

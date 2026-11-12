@@ -1,11 +1,11 @@
-"""Native epistemic-graph ingestion for object-store metadata.
+"""Native medulla ingestion for object-store metadata.
 
 Object bytes remain in their authoritative backing store; only store, bucket, object,
 and storage metadata is materialized.
 
 All writes use the ``scion_sdk.ingest`` knowledge-ingest facade. Nodes use
 canonical ``node_type`` and edges use canonical ``relationship``; nodes and edges commit
-in one epistemic-graph transaction. Missing engine configuration, rejected records,
+in one medulla transaction. Missing engine configuration, rejected records,
 checkpoint conflicts, and transaction failures propagate as ``IngestError`` (or a
 subclass).
 """
@@ -59,7 +59,7 @@ async def ingest_entities(
     *,
     ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
-    """Write canonical typed nodes and relationships in one epistemic-graph commit."""
+    """Write canonical typed nodes and relationships in one medulla commit."""
     if not entities:
         raise IngestError("ingest_entities needs at least one entity")
     change_set = ChangeSet(
