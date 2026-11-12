@@ -2,7 +2,7 @@
 
 CONCEPT:OB-OS.safety.size-caps-list-batch. The SDK generates one tool per
 ``ObjectStoreBackend`` method and calls the backend that ``get_client`` returns,
-so the caps and destructive-operation flags are enforced here, on a wrapper
+so the caps and key checks are enforced here, on a wrapper
 around that backend, instead of in each tool. Backends stay pure storage
 adapters; the wrapper changes no result, it only refuses.
 """
@@ -76,10 +76,6 @@ class GuardedBackend:
         )
 
     def delete_object(self, bucket: str, key: str) -> None:
-        if not load_limits().allow_object_delete:
-            raise ValueError(
-                "Object deletes are disabled (OBJECTSTORE_ALLOW_DELETE=false)."
-            )
         if not bucket or not key:
             raise ValueError("delete requires an explicit bucket and key.")
         if any(ch in key for ch in _FORBIDDEN_KEY_CHARS):
@@ -90,11 +86,6 @@ class GuardedBackend:
         self._backend.delete_object(bucket, key)
 
     def delete_bucket(self, bucket: str) -> None:
-        if not load_limits().allow_bucket_delete:
-            raise ValueError(
-                "Bucket deletes are disabled. Set OBJECTSTORE_ALLOW_BUCKET_DELETE=true "
-                "to enable them."
-            )
         self._backend.delete_bucket(bucket)
 
 

@@ -2,6 +2,7 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix dc: <http://purl.org/dc/terms/> .
 @prefix : <http://knuckles.team/kg#> .
+@prefix core: <https://knuckles-team.github.io/ontology/core#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -20,17 +21,17 @@
 :ObjectStore a owl:Class ;
     rdfs:label "Object Store" ;
     rdfs:comment "A configured named store: one backend (s3/gcs/azure/webdav/filesystem) plus its endpoint/region/root (objectstore_list_stores)." ;
-    rdfs:subClassOf :StorageContainer .
+    rdfs:subClassOf :StorageContainer, core:Database .
 
 :Bucket a owl:Class ;
     rdfs:label "Bucket" ;
     rdfs:comment "A bucket or container that holds objects within an ObjectStore (objectstore_list_buckets, objectstore_bucket_info)." ;
-    rdfs:subClassOf :StorageContainer .
+    rdfs:subClassOf :StorageContainer, core:Collection .
 
 :Object a owl:Class ;
     rdfs:label "Object" ;
     rdfs:comment "A stored object described by its key + metadata (objectstore_list_objects, objectstore_head_object). Metadata only — the raw bytes are NOT copied into the graph." ;
-    rdfs:subClassOf :File .
+    rdfs:subClassOf :File, core:Blob .
 
 # --- links (owl:ObjectProperty) ---
 

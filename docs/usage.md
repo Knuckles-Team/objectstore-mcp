@@ -78,6 +78,8 @@ with `STORAGE_UNSUPPORTED`.
   characters. `objectstore_delete_objects_by_prefix` requires an explicit bucket and a non-empty
   prefix, is capped, and **previews (dry-run) by default** — pass
   `"dry_run": false` to ran.
-- **Flags** — object removes are governed by `OBJECTSTORE_ALLOW_DELETE`
-  (default on); bucket removes by `OBJECTSTORE_ALLOW_BUCKET_DELETE`
-  (default off) and only ever remove empty buckets.
+- **Confirmation** — every remove (object, bucket, tags, lifecycle, prefix delete
+  with `dry_run` false, move) is declared destructive: the serving gateway asks a
+  human to approve it, or the caller passes `confirm`, or the operator sets the
+  one `SCION_ALLOW_DESTRUCTIVE` setting for unattended use. Bucket removes only
+  ever remove empty buckets.

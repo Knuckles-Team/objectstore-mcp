@@ -173,8 +173,6 @@ diagrams are documented in the
 | `OBJECTSTORE_MAX_TRANSFER_BYTES` | `104857600` (100 MiB) | Cap per transfer (single or batch total) |
 | `OBJECTSTORE_MAX_BATCH_KEYS` | `100` | Cap on batch delete / dir transfer key counts |
 | `OBJECTSTORE_MAX_LIST_KEYS` | `1000` | Cap on one listing page |
-| `OBJECTSTORE_ALLOW_DELETE` | `true` | Object deletes (delete/delete_batch/move) |
-| `OBJECTSTORE_ALLOW_BUCKET_DELETE` | `false` | Bucket deletes (empty buckets only) |
 | `OBJECTSTORETOOL` | `True` | Register the objectstore tool set |
 | `HOST` / `PORT` / `TRANSPORT` | `0.0.0.0` / `8000` / `stdio` | MCP server bind + transport (`stdio`, `streamable-http`, `sse`) |
 | `AUTH_TYPE` | `none` | MCP auth mode (container image) |
@@ -324,8 +322,6 @@ MIT — see [LICENSE](LICENSE).
 | `OBJECTSTORE_MAX_TRANSFER_BYTES` | `104857600` |  |
 | `OBJECTSTORE_MAX_BATCH_KEYS` | `100` |  |
 | `OBJECTSTORE_MAX_LIST_KEYS` | `1000` |  |
-| `OBJECTSTORE_ALLOW_DELETE` | `true` |  |
-| `OBJECTSTORE_ALLOW_BUCKET_DELETE` | `false` |  |
 | `AZURE_STORAGE_CONNECTION_STRING` | — | Provider credentials resolve through each SDK's own chain (this package never reads them itself — the cloud SDK does): S3  : boto3 chain (AWS access key / secret / profile, ~/.aws, instance role) GCS : the gcloud application-default credentials chain (service-account file) Azure is the exception — the code reads this connection string directly: |
 | `DEFAULT_AGENT_NAME` | `ObjectStore Agent` |  |
 | `AGENT_DESCRIPTION` | `AI agent for object-storage operations.` |  |

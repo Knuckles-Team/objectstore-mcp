@@ -17,7 +17,7 @@ Bucket administration through the objectstore-mcp MCP server: list stores and bu
 | Create | `objectstore_create_bucket` | `bucket`, `location` |
 | Exists / inspect | `objectstore_bucket_exists` / `objectstore_bucket_info` | `bucket` |
 | Backend capabilities | `objectstore_capabilities` | none |
-| Delete empty bucket | `objectstore_delete_bucket` | `bucket`, `confirm` (needs `OBJECTSTORE_ALLOW_BUCKET_DELETE=true`) |
+| Delete empty bucket | `objectstore_delete_bucket` | `bucket`, `confirm` (destructive: needs confirmation) |
 | Lifecycle read | `objectstore_get_bucket_lifecycle` | `bucket`, `store` |
 | Lifecycle replace | `objectstore_put_bucket_lifecycle` | `bucket`, `rules` [{`id`, `prefix`, `enabled`, `expiration_days`, `noncurrent_expiration_days`, `abort_incomplete_multipart_days`, `transition_days`, `storage_class`}] |
 | Lifecycle clear | `objectstore_delete_bucket_lifecycle` | `bucket`, `store` |

@@ -94,16 +94,10 @@ def test_limits_defaults_and_overrides(monkeypatch):
     assert limits.max_get_bytes == 10 * 1024 * 1024
     assert limits.max_transfer_bytes == 100 * 1024 * 1024
     assert limits.max_batch_keys == 100
-    assert limits.allow_object_delete is True
-    assert limits.allow_bucket_delete is False
 
     monkeypatch.setenv("OBJECTSTORE_MAX_GET_BYTES", "1024")
-    monkeypatch.setenv("OBJECTSTORE_ALLOW_DELETE", "false")
-    monkeypatch.setenv("OBJECTSTORE_ALLOW_BUCKET_DELETE", "true")
     limits = load_limits()
     assert limits.max_get_bytes == 1024
-    assert limits.allow_object_delete is False
-    assert limits.allow_bucket_delete is True
 
     monkeypatch.setenv("OBJECTSTORE_MAX_GET_BYTES", "not-a-number")
     with pytest.raises(ValueError, match="integer"):

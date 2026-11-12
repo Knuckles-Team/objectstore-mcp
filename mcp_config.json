@@ -8,8 +8,6 @@
       ],
       "env": {
         "OBJECTSTORETOOL": "True",
-        "OBJECTSTORE_ALLOW_BUCKET_DELETE": "false",
-        "OBJECTSTORE_ALLOW_DELETE": "true",
         "OBJECTSTORE_DEFAULT_STORE": "local",
         "OBJECTSTORE_FS_ROOT": "~/.local/share/objectstore-mcp",
         "OBJECTSTORE_MAX_BATCH_KEYS": "100",

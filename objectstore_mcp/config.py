@@ -23,7 +23,7 @@ when no ``store`` argument is given (default: first configured store, else
 
 Limits
 ------
-Size caps and destructive-operation flags are environment-tunable with sane
+Size caps are environment-tunable with sane
 defaults; the tool layer enforces them uniformly across all backends.
 """
 
@@ -46,15 +46,6 @@ __all__ = [
 DEFAULT_FS_ROOT = "~/.local/share/objectstore-mcp"
 LOCAL_STORE_NAME = "local"
 
-_TRUE = {"1", "true", "yes", "on"}
-
-
-def _as_bool(raw: str | None, default: bool) -> bool:
-    if raw is None or raw.strip() == "":
-        return default
-    return raw.strip().lower() in _TRUE
-
-
 def _as_int(name: str, raw: str | None, default: int) -> int:
     if raw is None or raw.strip() == "":
         return default
@@ -73,8 +64,6 @@ class Limits:
     max_transfer_bytes: int = 100 * 1024 * 1024
     max_batch_keys: int = 100
     max_list_keys: int = 1000
-    allow_object_delete: bool = True
-    allow_bucket_delete: bool = False
 
 
 def load_limits() -> Limits:
@@ -104,10 +93,6 @@ def load_limits() -> Limits:
             "OBJECTSTORE_MAX_LIST_KEYS",
             os.getenv("OBJECTSTORE_MAX_LIST_KEYS"),
             Limits.max_list_keys,
-        ),
-        allow_object_delete=_as_bool(os.getenv("OBJECTSTORE_ALLOW_DELETE"), True),
-        allow_bucket_delete=_as_bool(
-            os.getenv("OBJECTSTORE_ALLOW_BUCKET_DELETE"), False
         ),
     )
 

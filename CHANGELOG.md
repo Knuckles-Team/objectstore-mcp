@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-11-12
+
+### Changed
+- Destructive tools (move, prefix delete with `dry_run` false, tag and lifecycle removal) and the SDK-generated object and bucket deletes now use the SDK's one destructive declaration and guard (scion-sdk 0.10.2): each carries the MCP `destructiveHint`, and a call runs only after live confirmation, a per-call `confirm`, or the operator's `SCION_ALLOW_DESTRUCTIVE` setting.
+
+### Removed
+- The connector-local `OBJECTSTORE_ALLOW_DELETE` and `OBJECTSTORE_ALLOW_BUCKET_DELETE` flags.
+
 ## [2.5.1] - 2026-11-06
 
 ### Changed

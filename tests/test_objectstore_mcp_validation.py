@@ -81,6 +81,7 @@ async def test_bucket_and_object_crud(mcp):
         src_key="docs/b.txt",
         dst_bucket="alpha",
         dst_key="docs/c.txt",
+        confirm=True,
     )
     assert moved["dest"]["key"] == "docs/c.txt"
     page = await call(mcp, "objectstore_list_objects", bucket="alpha", prefix="docs/")
@@ -226,7 +227,7 @@ async def test_s3_lifecycle_versioning_and_tags(mcp, monkeypatch):
     assert s3_rules[1]["NoncurrentVersionExpiration"] == {"NoncurrentDays": 30}
     got = await call(mcp, "objectstore_get_bucket_lifecycle", bucket="m")
     assert [r["id"] for r in got["rules"]] == ["scratch", "old"]
-    await call(mcp, "objectstore_delete_bucket_lifecycle", bucket="m")
+    await call(mcp, "objectstore_delete_bucket_lifecycle", bucket="m", confirm=True)
     assert fake.lifecycle is None
     with pytest.raises(ToolFailure, match="sets no action"):
         await call(
@@ -241,7 +242,7 @@ async def test_s3_lifecycle_versioning_and_tags(mcp, monkeypatch):
     assert (await call(mcp, "objectstore_get_object_tags", bucket="m", key="k"))[
         "tags"
     ] == {"a": "1"}
-    await call(mcp, "objectstore_delete_object_tags", bucket="m", key="k")
+    await call(mcp, "objectstore_delete_object_tags", bucket="m", key="k", confirm=True)
     assert fake.tags == []
 
 
