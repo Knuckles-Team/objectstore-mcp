@@ -26,7 +26,7 @@ metadata:
 | Create | `objectstore_create_bucket` | `bucket`, `location` |
 | Exists / inspect | `objectstore_bucket_exists` / `objectstore_bucket_info` | `bucket` |
 | Backend capabilities | `objectstore_capabilities` | none |
-| Delete empty bucket | `objectstore_delete_bucket` | `bucket`, `confirm` (needs `OBJECTSTORE_ALLOW_BUCKET_DELETE=true`) |
+| Delete empty bucket | `objectstore_delete_bucket` | `bucket`, `confirm` (destructive: needs confirmation) |
 | Lifecycle read | `objectstore_get_bucket_lifecycle` | `bucket`, `store` |
 | Lifecycle replace | `objectstore_put_bucket_lifecycle` | `bucket`, `rules` [{`id`, `prefix`, `enabled`, `expiration_days`, `noncurrent_expiration_days`, `abort_incomplete_multipart_days`, `transition_days`, `storage_class`}] |
 | Lifecycle clear | `objectstore_delete_bucket_lifecycle` | `bucket`, `store` |
@@ -55,7 +55,6 @@ map; the server never reads an ambient provider chain. The caller's identity mus
 | `OBJECTSTORE_DEFAULT_STORE` | Store used when `store` is omitted (the per-operation tools always use it) |
 | `OBJECTSTORE_MAX_GET_BYTES` / `OBJECTSTORE_MAX_PUT_BYTES` / `OBJECTSTORE_MAX_TRANSFER_BYTES` | Size caps |
 | `OBJECTSTORE_MAX_LIST_KEYS` / `OBJECTSTORE_MAX_BATCH_KEYS` | List and batch caps |
-| `OBJECTSTORE_ALLOW_DELETE` / `OBJECTSTORE_ALLOW_BUCKET_DELETE` | Delete switches (bucket deletes default off) |
 
 ## Refusals
 A store failure names its code: `STORAGE_NOT_FOUND`, `STORAGE_EXISTS`,

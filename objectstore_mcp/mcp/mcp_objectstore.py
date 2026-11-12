@@ -22,8 +22,9 @@ Backends stay pure storage adapters; safety policy lives here only.
 from pathlib import Path
 from typing import Any, Literal
 
-from fastmcp import FastMCP
+from fastmcp import Context, FastMCP
 from pydantic import BaseModel, Field
+from scion_sdk.mcp.destructive import guard_destructive
 from scion_sdk.storage import StorageError, UnsupportedOperationError
 
 from objectstore_mcp.auth import entitled_store_names, get_backend
@@ -80,11 +81,11 @@ def _single_key(bucket: str, key: str, operation: str) -> None:
         )
 
 
-def _deletes_allowed() -> None:
-    if not load_limits().allow_object_delete:
-        raise ValueError(
-            "Object deletes are disabled (OBJECTSTORE_ALLOW_DELETE=false)."
-        )
+async def _confirmed(
+    ctx: Context | None, operation: str, arguments: dict[str, Any], confirm: bool
+) -> dict[str, Any] | Any | None:
+    """The SDK destructive guard: ``None`` to proceed, else the result to return."""
+    return await guard_destructive(ctx, operation, arguments, confirm=confirm)
 
 
 def _s3_client(store: str | None) -> tuple[Any, str]:
@@ -196,11 +197,26 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
         dst_bucket: str,
         dst_key: str,
         store: str | None = StoreArg,
+        confirm: bool = False,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Move one object: copy it to dst_bucket/dst_key, then delete the source."""
         _require_dest(dst_key)
         _single_key(src_bucket, src_key, "move")
-        _deletes_allowed()
+        if (
+            refused := await _confirmed(
+                ctx,
+                "objectstore_move_object",
+                {
+                    "src_bucket": src_bucket,
+                    "src_key": src_key,
+                    "dst_bucket": dst_bucket,
+                    "dst_key": dst_key,
+                },
+                confirm,
+            )
+        ) is not None:
+            return refused
         backend, _config = get_backend(store)
         info = backend.copy_object(src_bucket, src_key, dst_bucket, dst_key)
         backend.delete_object(src_bucket, src_key)
@@ -220,14 +236,28 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
             default=True, description="List what would be deleted; delete nothing."
         ),
         store: str | None = StoreArg,
+        confirm: bool = False,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Delete objects under a non-empty prefix (dry run by default, count-capped)."""
-        _deletes_allowed()
         if not bucket or not prefix:
             raise ValueError(
                 "An explicit bucket and a non-empty prefix are required "
                 "(refusing to bulk-delete a whole bucket)."
             )
+        if (
+            not dry_run
+            and (
+                refused := await _confirmed(
+                    ctx,
+                    "objectstore_delete_objects_by_prefix",
+                    {"bucket": bucket, "prefix": prefix, "max_keys": max_keys},
+                    confirm,
+                )
+            )
+            is not None
+        ):
+            return refused
         limits = load_limits()
         cap = min(max_keys or limits.max_batch_keys, limits.max_batch_keys)
         backend, _config = get_backend(store)
@@ -419,9 +449,18 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(tags={"lifecycle"}, annotations={"destructiveHint": True})
     async def objectstore_delete_bucket_lifecycle(
-        bucket: str, store: str | None = StoreArg
+        bucket: str,
+        store: str | None = StoreArg,
+        confirm: bool = False,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Remove every lifecycle rule from a bucket."""
+        if (
+            refused := await _confirmed(
+                ctx, "objectstore_delete_bucket_lifecycle", {"bucket": bucket}, confirm
+            )
+        ) is not None:
+            return refused
         client, name = _s3_client(store)
         _s3_call(
             "delete_bucket_lifecycle",
@@ -497,9 +536,22 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(tags={"objects"}, annotations={"destructiveHint": True})
     async def objectstore_delete_object_tags(
-        bucket: str, key: str, store: str | None = StoreArg
+        bucket: str,
+        key: str,
+        store: str | None = StoreArg,
+        confirm: bool = False,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Remove every tag from an object."""
+        if (
+            refused := await _confirmed(
+                ctx,
+                "objectstore_delete_object_tags",
+                {"bucket": bucket, "key": key},
+                confirm,
+            )
+        ) is not None:
+            return refused
         client, name = _s3_client(store)
         _s3_call(
             "delete_object_tags",

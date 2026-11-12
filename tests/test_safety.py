@@ -1,6 +1,6 @@
 """Safety-governor tests (CONN-OBJECTSTORE-MCP-R006, CONCEPT:OB-OS.safety.size-caps-list-batch).
 
-Caps, destructive-operation flags, dry runs and explicitness hold on every tool,
+Caps, destructive confirmation, dry runs and explicitness hold on every tool,
 including the per-operation tools the SDK generates from the backend protocol.
 """
 
@@ -20,7 +20,9 @@ async def test_put_cap_enforced(mcp, monkeypatch):
     monkeypatch.setenv("OBJECTSTORE_MAX_PUT_BYTES", "4")
     await call(mcp, "objectstore_create_bucket", bucket="data")
     with pytest.raises(ToolFailure, match="put cap"):
-        await call(mcp, "objectstore_put_object", bucket="data", key="k", data="too long")
+        await call(
+            mcp, "objectstore_put_object", bucket="data", key="k", data="too long"
+        )
 
 
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
@@ -55,18 +57,16 @@ async def test_delete_rejects_wildcards(mcp):
 
 
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
-async def test_delete_flag_blocks_objects(mcp, monkeypatch):
+async def test_unconfirmed_destructive_calls_are_refused(mcp):
     await seed(mcp)
-    monkeypatch.setenv("OBJECTSTORE_ALLOW_DELETE", "false")
-    with pytest.raises(ToolFailure, match="disabled"):
+    refused = [
         await call(
-            mcp, "objectstore_delete_object", bucket="data", key="tmp/a", confirm=True
-        )
-    with pytest.raises(ToolFailure, match="disabled"):
-        await call(
-            mcp, "objectstore_delete_objects_by_prefix", bucket="data", prefix="tmp/"
-        )
-    with pytest.raises(ToolFailure, match="disabled"):
+            mcp,
+            "objectstore_delete_objects_by_prefix",
+            bucket="data",
+            prefix="tmp/",
+            dry_run=False,
+        ),
         await call(
             mcp,
             "objectstore_move_object",
@@ -74,7 +74,30 @@ async def test_delete_flag_blocks_objects(mcp, monkeypatch):
             src_key="tmp/a",
             dst_bucket="data",
             dst_key="z",
-        )
+        ),
+        await call(mcp, "objectstore_delete_object_tags", bucket="data", key="tmp/a"),
+        await call(mcp, "objectstore_delete_bucket_lifecycle", bucket="data"),
+        await call(mcp, "objectstore_delete_object", bucket="data", key="tmp/a"),
+        await call(mcp, "objectstore_delete_bucket", bucket="data"),
+    ]
+    assert all(r.get("cancelled") is True for r in refused)
+    page = await call(mcp, "objectstore_list_objects", bucket="data")
+    assert len(page["objects"]) == 3
+
+
+@pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
+async def test_operator_setting_allows_unattended_destructive_calls(mcp, monkeypatch):
+    await seed(mcp)
+    monkeypatch.setenv("SCION_ALLOW_DESTRUCTIVE", "true")
+    result = await call(
+        mcp,
+        "objectstore_move_object",
+        src_bucket="data",
+        src_key="tmp/a",
+        dst_bucket="data",
+        dst_key="z",
+    )
+    assert result["dest"]["key"] == "z"
 
 
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
@@ -97,6 +120,7 @@ async def test_delete_by_prefix_executes_with_dry_run_false(mcp):
         bucket="data",
         prefix="tmp/",
         dry_run=False,
+        confirm=True,
     )
     assert result["deleted"] == 2
     page = await call(mcp, "objectstore_list_objects", bucket="data")
@@ -107,7 +131,9 @@ async def test_delete_by_prefix_executes_with_dry_run_false(mcp):
 async def test_delete_by_prefix_requires_prefix(mcp):
     await seed(mcp)
     with pytest.raises(ToolFailure, match="prefix"):
-        await call(mcp, "objectstore_delete_objects_by_prefix", bucket="data", prefix="")
+        await call(
+            mcp, "objectstore_delete_objects_by_prefix", bucket="data", prefix=""
+        )
 
 
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
@@ -125,15 +151,7 @@ async def test_delete_by_prefix_capped(mcp, monkeypatch):
 
 
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
-async def test_bucket_delete_disabled_by_default(mcp):
-    await call(mcp, "objectstore_create_bucket", bucket="data")
-    with pytest.raises(ToolFailure, match="disabled"):
-        await call(mcp, "objectstore_delete_bucket", bucket="data", confirm=True)
-
-
-@pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
-async def test_bucket_delete_opt_in_and_empty_only(mcp, monkeypatch):
-    monkeypatch.setenv("OBJECTSTORE_ALLOW_BUCKET_DELETE", "true")
+async def test_bucket_delete_confirmed_and_empty_only(mcp):
     await seed(mcp)
     with pytest.raises(ToolFailure):
         await call(mcp, "objectstore_delete_bucket", bucket="data", confirm=True)
