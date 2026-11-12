@@ -54,7 +54,12 @@ async def test_bucket_and_object_crud(mcp):
     assert created["name"] == "alpha"
     assert await call(mcp, "objectstore_bucket_exists", bucket="alpha") is True
     listing = await call(mcp, "objectstore_list_buckets")
-    names = [b["name"] for b in (listing.get("result", listing) if isinstance(listing, dict) else listing)]
+    names = [
+        b["name"]
+        for b in (
+            listing.get("result", listing) if isinstance(listing, dict) else listing
+        )
+    ]
     assert names == ["alpha"]
     await call(
         mcp,
@@ -252,7 +257,9 @@ def test_refusal_keeps_the_storage_cause(monkeypatch):
 
     monkeypatch.setenv(
         "OBJECTSTORE_STORES",
-        json.dumps({"s": {"backend": "s3", "endpoint": "http://storage.internal.example"}}),
+        json.dumps(
+            {"s": {"backend": "s3", "endpoint": "http://storage.internal.example"}}
+        ),
     )
     monkeypatch.setenv("OBJECTSTORE_DEFAULT_STORE", "s")
     reset_backend_cache()

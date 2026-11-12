@@ -46,6 +46,7 @@ __all__ = [
 DEFAULT_FS_ROOT = "~/.local/share/objectstore-mcp"
 LOCAL_STORE_NAME = "local"
 
+
 def _as_int(name: str, raw: str | None, default: int) -> int:
     if raw is None or raw.strip() == "":
         return default

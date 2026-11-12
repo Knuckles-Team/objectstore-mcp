@@ -207,7 +207,12 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
             refused := await _confirmed(
                 ctx,
                 "objectstore_move_object",
-                {"src_bucket": src_bucket, "src_key": src_key, "dst_bucket": dst_bucket, "dst_key": dst_key},
+                {
+                    "src_bucket": src_bucket,
+                    "src_key": src_key,
+                    "dst_bucket": dst_bucket,
+                    "dst_key": dst_key,
+                },
                 confirm,
             )
         ) is not None:
@@ -240,14 +245,18 @@ def register_objectstore_tools(mcp: FastMCP) -> None:
                 "An explicit bucket and a non-empty prefix are required "
                 "(refusing to bulk-delete a whole bucket)."
             )
-        if not dry_run and (
-            refused := await _confirmed(
-                ctx,
-                "objectstore_delete_objects_by_prefix",
-                {"bucket": bucket, "prefix": prefix, "max_keys": max_keys},
-                confirm,
+        if (
+            not dry_run
+            and (
+                refused := await _confirmed(
+                    ctx,
+                    "objectstore_delete_objects_by_prefix",
+                    {"bucket": bucket, "prefix": prefix, "max_keys": max_keys},
+                    confirm,
+                )
             )
-        ) is not None:
+            is not None
+        ):
             return refused
         limits = load_limits()
         cap = min(max_keys or limits.max_batch_keys, limits.max_batch_keys)

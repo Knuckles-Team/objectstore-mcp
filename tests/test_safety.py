@@ -20,7 +20,9 @@ async def test_put_cap_enforced(mcp, monkeypatch):
     monkeypatch.setenv("OBJECTSTORE_MAX_PUT_BYTES", "4")
     await call(mcp, "objectstore_create_bucket", bucket="data")
     with pytest.raises(ToolFailure, match="put cap"):
-        await call(mcp, "objectstore_put_object", bucket="data", key="k", data="too long")
+        await call(
+            mcp, "objectstore_put_object", bucket="data", key="k", data="too long"
+        )
 
 
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
@@ -129,7 +131,9 @@ async def test_delete_by_prefix_executes_with_dry_run_false(mcp):
 async def test_delete_by_prefix_requires_prefix(mcp):
     await seed(mcp)
     with pytest.raises(ToolFailure, match="prefix"):
-        await call(mcp, "objectstore_delete_objects_by_prefix", bucket="data", prefix="")
+        await call(
+            mcp, "objectstore_delete_objects_by_prefix", bucket="data", prefix=""
+        )
 
 
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R006")
