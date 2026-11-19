@@ -18,7 +18,7 @@ async def _served(mcp) -> set[str]:
 
 @pytest.mark.spec("CONN-OBJECTSTORE-MCP-R008")
 async def test_every_served_tool_is_an_ontology_tool_and_no_other(mcp):
-    declared = set(re.findall(r'^:tool_(\w+) a :Tool', TTL, flags=re.M))
+    declared = set(re.findall(r'^:tool_(\w+) a core:Tool', TTL, flags=re.M))
     assert declared == await _served(mcp)
 
 
@@ -26,7 +26,7 @@ async def test_every_served_tool_is_an_ontology_tool_and_no_other(mcp):
 async def test_skills_prompt_and_contracts_name_served_tools(mcp):
     served = await _served(mcp)
     skills = {p.parent.name for p in (PKG / "skills").glob("*/SKILL.md")}
-    for name in re.findall(r'^:skill_\w+ a :Skill ;\n    rdfs:label "([\w-]+)"', TTL, flags=re.M):
+    for name in re.findall(r'^:skill_\w+ a core:Skill ;\n    rdfs:label "([\w-]+)"', TTL, flags=re.M):
         assert name in skills
     for skill in skills:
         body = (PKG / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
@@ -47,4 +47,4 @@ def test_classes_roll_up_to_core_by_subclass_never_import():
     assert "owl:imports" not in TTL
     for cls, parent in (("ObjectStore", "StorageContainer"), ("Bucket", "StorageContainer"), ("Object", "File")):
         block = TTL.split(f":{cls} a owl:Class ;", 1)[1].split("\n\n", 1)[0]
-        assert f"rdfs:subClassOf :{parent}" in block, cls
+        assert f"rdfs:subClassOf core:{parent}" in block, cls

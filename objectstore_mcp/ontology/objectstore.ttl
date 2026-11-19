@@ -9,8 +9,8 @@
 
 # Object-storage ontology — named stores, buckets/containers, and the objects they
 # hold, across S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a local filesystem
-# backend. All classes and properties live in the shared `:` (kg#) namespace; only the
-# owl:Ontology node gets the per-package IRI. Backs the objectstore-mcp tool surface
+# backend. Connector classes and properties live in the `:` connector namespace and
+# subclass medulla core classes (`core:`); core classes are never redeclared. Backs the objectstore-mcp tool surface
 # (one typed tool per operation) and its native ingestion (objectstore_ingest_buckets, objectstore_ingest_objects).
 #
 # NOTE: object storage IS a blob backend. This model captures typed :Object *metadata*
