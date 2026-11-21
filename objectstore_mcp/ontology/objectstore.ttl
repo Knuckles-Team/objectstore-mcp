@@ -6,6 +6,7 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dp: <https://knuckles-team.github.io/ontology/data-platform#> .
 
 # Object-storage ontology — named stores, buckets/containers, and the objects they
 # hold, across S3/MinIO/R2, Google Cloud Storage, Azure Blob, and a local filesystem
@@ -23,11 +24,6 @@
     rdfs:comment "A configured named store: one backend (s3/gcs/azure/webdav/filesystem) plus its endpoint/region/root (objectstore_list_stores)." ;
     rdfs:subClassOf core:StorageContainer, core:Database .
 
-:Bucket a owl:Class ;
-    rdfs:label "Bucket" ;
-    rdfs:comment "A bucket or container that holds objects within an ObjectStore (objectstore_list_buckets, objectstore_bucket_info)." ;
-    rdfs:subClassOf core:StorageContainer, core:Collection .
-
 :Object a owl:Class ;
     rdfs:label "Object" ;
     rdfs:comment "A stored object described by its key + metadata (objectstore_list_objects, objectstore_head_object). Metadata only — the raw bytes are NOT copied into the graph." ;
@@ -35,30 +31,12 @@
 
 # --- links (owl:ObjectProperty) ---
 
-:inStore a owl:ObjectProperty ;
-    rdfs:label "in store" ;
-    rdfs:subPropertyOf core:partOf ;
-    rdfs:comment "Links a Bucket to the ObjectStore that hosts it." ;
-    rdfs:domain :Bucket ;
-    rdfs:range :ObjectStore .
-
 :inBucket a owl:ObjectProperty ;
     rdfs:label "in bucket" ;
     rdfs:subPropertyOf core:partOf ;
     rdfs:comment "Links an Object to the Bucket that contains it." ;
     rdfs:domain :Object ;
-    rdfs:range :Bucket .
-
-:hasBlob a owl:ObjectProperty ;
-    rdfs:label "has blob" ;
-    rdfs:comment "Links an Object to the shared :Blob holding its raw bytes, when those bytes were separately content-addressed into the graph (avoids double-storing the payload)." ;
-    rdfs:domain :Object ;
-    rdfs:range core:Blob .
-
-:ownedBy a owl:ObjectProperty ;
-    rdfs:label "owned by" ;
-    rdfs:comment "Links a Bucket or Object to the Person/Agent responsible for it." ;
-    rdfs:range core:Person .
+    rdfs:range dp:Bucket .
 
 # --- fields (owl:DatatypeProperty) ---
 
@@ -79,18 +57,6 @@
     rdfs:comment "Region/location of a Bucket or ObjectStore (e.g. us-east-1)." ;
     rdfs:range xsd:string .
 
-:objectKey a owl:DatatypeProperty ;
-    rdfs:label "object key" ;
-    rdfs:comment "The full key/path of an Object within its bucket." ;
-    rdfs:domain :Object ;
-    rdfs:range xsd:string .
-
-:byteSize a owl:DatatypeProperty ;
-    rdfs:label "byte size" ;
-    rdfs:comment "Size of an Object's payload in bytes." ;
-    rdfs:domain :Object ;
-    rdfs:range xsd:integer .
-
 :etag a owl:DatatypeProperty ;
     rdfs:label "etag" ;
     rdfs:comment "Entity tag / content hash of an Object as reported by the backend." ;
@@ -106,12 +72,6 @@
 :storageClass a owl:DatatypeProperty ;
     rdfs:label "storage class" ;
     rdfs:comment "Provider storage tier of an Object (e.g. STANDARD, GLACIER, COOL)." ;
-    rdfs:domain :Object ;
-    rdfs:range xsd:string .
-
-:lastModified a owl:DatatypeProperty ;
-    rdfs:label "last modified" ;
-    rdfs:comment "Last-modified timestamp of an Object (ISO-8601, where available)." ;
     rdfs:domain :Object ;
     rdfs:range xsd:string .
 
