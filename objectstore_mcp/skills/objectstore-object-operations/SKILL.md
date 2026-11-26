@@ -2,7 +2,7 @@
 name: objectstore-object-operations
 skill_type: skill
 description: >-
-  Object-level operations through the objectstore-mcp MCP server with one typed tool per operation: list, head, get, put, copy, move, delete (single or by prefix with a dry run), presigned URLs, user metadata and object tags. Use when the agent must read or write an object, page a bucket by prefix, mint a presigned URL, tag an object, or delete objects. Do NOT use for bucket provisioning, lifecycle or versioning (objectstore-bucket-administration) or moving local files (objectstore-data-transfer).
+  Object-level operations through the objectstore-mcp MCP server with one typed tool per operation: list, head, get, put, copy, move, delete (single or by prefix with a dry run), presigned URLs, user metadata and object tags. Use when the agent must read or write an object, page a bucket by prefix, mint a presigned URL, tag an object, or delete objects. Not for buckets or file transfers.
 license: MIT
 tags: [objectstore, s3, objects, presign, tags, mcp]
 metadata:
@@ -11,12 +11,35 @@ metadata:
 ---
 # ObjectStore Object Operations
 
+Scope: Object-level operations through the objectstore-mcp MCP server with one typed tool per operation: list, head, get, put, copy, move, delete (single or by prefix with a dry run), presigned URLs, user metadata and object tags. Use when the agent must read or write an object, page a bucket by prefix, mint a presigned URL, tag an object, or delete objects. Do NOT use for bucket provisioning, lifecycle or versioning (objectstore-bucket-administration) or moving local files (objectstore-data-transfer).
+
 ## When to use
 - List objects under a prefix (`delimiter="/"` folds folders), with `continuation_token` paging.
 - Stat, read (size-capped) or write a small object; copy or move it.
 - Mint a presigned GET or PUT URL for a handoff to another system.
 - Read or replace an object's user metadata or its tag set.
 - Delete one object, or every object under a prefix after a dry run.
+
+## Steps
+
+1. Confirm the object or prefix exists with `objectstore_list_objects` or `objectstore_head_object`.
+   Verify the expected key appears with its size.
+2. Read or write with `objectstore_get_object` (`max_bytes`), `objectstore_put_object`, `objectstore_copy_object` or `objectstore_move_object`.
+   Verify the call returns an etag for the key.
+3. Mint a handoff link with `objectstore_presigned_url` (`method` GET or PUT, `expires_in` seconds).
+   Verify the response carries a URL and expiry.
+4. Delete with `objectstore_delete_object` (`confirm=true`), or for a prefix run `objectstore_delete_objects_by_prefix` with `dry_run=true` first and show the matched keys.
+   Verify the dry run lists only the intended keys before rerunning with `dry_run=false`.
+5. Check the final state with `objectstore_head_object` or `objectstore_get_object_tags`.
+   Verify the change landed and report each key with its etag.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `STORAGE_NOT_FOUND` | Wrong `bucket` or `key`, or a typo in the prefix | List the parent prefix with `objectstore_list_objects` (`delimiter="/"`), and use the exact key shown |
+| Delete refused | `confirm` was not given, or a wildcard was passed to `objectstore_delete_object` | Pass the exact key with `confirm=true`, or use `objectstore_delete_objects_by_prefix` with `dry_run=true` first |
+| Read truncated or refused on size | The object is larger than `max_bytes` or the read cap | Use `objectstore_head_object` to get the size, then fetch through a `objectstore_presigned_url` or objectstore-data-transfer instead |
 
 ## Tools
 | Operation | Tool | Key parameters |

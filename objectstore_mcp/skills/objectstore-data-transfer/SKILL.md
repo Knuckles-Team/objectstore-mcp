@@ -2,7 +2,7 @@
 name: objectstore-data-transfer
 skill_type: skill
 description: >-
-  Move files between the server's local filesystem and object storage through the objectstore-mcp MCP server: upload or download one file, upload a directory under a prefix, or download every object under a prefix, all size- and count-capped. Use for staging, backups and restores that run on the server host. Do NOT use for in-memory object reads and writes (objectstore-object-operations) or bucket settings (objectstore-bucket-administration).
+  Move files between the server's local filesystem and object storage through the objectstore-mcp MCP server: upload or download one file, upload a directory under a prefix, or download every object under a prefix, all size- and count-capped. Use for staging, backups and restores that run on the server host. Not for in-memory object I/O or bucket settings.
 license: MIT
 tags: [objectstore, s3, transfer, backup, mcp]
 metadata:
@@ -11,12 +11,33 @@ metadata:
 ---
 # ObjectStore Data Transfer
 
+Scope: Move files between the server's local filesystem and object storage through the objectstore-mcp MCP server: upload or download one file, upload a directory under a prefix, or download every object under a prefix, all size- and count-capped. Use for staging, backups and restores that run on the server host. Do NOT use for in-memory object reads and writes (objectstore-object-operations) or bucket settings (objectstore-bucket-administration).
+
 ## When to use
 - Upload a file the server can read to a bucket, or download an object to a server path.
 - Upload a whole directory under a key prefix, or restore a prefix into a directory.
 
 Paths are on the machine that runs the server, not the caller's machine. To hand a file
 to another system, use a presigned URL instead (objectstore-object-operations).
+
+## Steps
+
+1. Confirm the destination bucket with `objectstore_bucket_exists`.
+   Verify it returns true, and create it through objectstore-bucket-administration if not.
+2. Transfer one file with `objectstore_upload_file` or `objectstore_download_file` (`bucket`, `key`, `local_path`).
+   Verify the call reports the bytes moved.
+3. Transfer a tree with `objectstore_upload_directory` or `objectstore_download_prefix`, setting `max_keys` explicitly.
+   Verify the reported object count is at or below that cap.
+4. Check the result with `objectstore_list_objects` under the prefix.
+   Verify the keys and sizes match the source and report them.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Refused before any byte moves | The file exceeds `OBJECTSTORE_MAX_TRANSFER_BYTES` or the directory exceeds the batch cap | Split the transfer into smaller files or prefixes, or lower `max_keys`, and run it again |
+| `local_path` not found or download skipped | The path is on the server host, not the caller, or the target exists and `overwrite` is unset | Use a path that exists on the server host, and pass `overwrite=true` only when replacing is intended |
+| `STORAGE_EGRESS_REFUSED` | The endpoint is not in `allowed_private_hosts` | Report the code, and ask the operator to add the endpoint to the store configuration |
 
 ## Tools
 | Operation | Tool | Key parameters |

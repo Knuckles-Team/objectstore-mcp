@@ -2,7 +2,7 @@
 name: objectstore-bucket-administration
 skill_type: skill
 description: >-
-  Bucket administration through the objectstore-mcp MCP server: list stores and buckets, create, inspect and (gated) delete buckets, and manage bucket lifecycle rules and versioning on S3-compatible stores. Use when the agent must provision or audit buckets, discover which stores the caller may reach, set retention or expiry, or turn versioning on. Do NOT use for object reads and writes (objectstore-object-operations) or local file transfers (objectstore-data-transfer).
+  Bucket administration through the objectstore-mcp MCP server: list stores and buckets, create, inspect and (gated) delete buckets, and manage bucket lifecycle rules and versioning on S3-compatible stores. Use when the agent must provision or audit buckets, discover which stores the caller may reach, set retention or expiry, or turn versioning on. Not for object I/O or file transfers.
 license: MIT
 tags: [objectstore, s3, buckets, lifecycle, versioning, mcp]
 metadata:
@@ -11,12 +11,35 @@ metadata:
 ---
 # ObjectStore Bucket Administration
 
+Scope: Bucket administration through the objectstore-mcp MCP server: list stores and buckets, create, inspect and (gated) delete buckets, and manage bucket lifecycle rules and versioning on S3-compatible stores. Use when the agent must provision or audit buckets, discover which stores the caller may reach, set retention or expiry, or turn versioning on. Do NOT use for object reads and writes (objectstore-object-operations) or local file transfers (objectstore-data-transfer).
+
 ## When to use
 - Discover the stores your identity may reach, and the buckets in a store.
 - Create a bucket, check it exists, inspect it, or delete an empty one (when enabled).
 - Set lifecycle rules: expire objects under a prefix, expire noncurrent versions, abort
   stale multipart uploads, or transition to another storage class.
 - Read or change a bucket's versioning state.
+
+## Steps
+
+1. Discover reachable stores with `objectstore_list_stores`.
+   Verify the target store appears, and list its buckets with `objectstore_list_buckets`.
+2. Create a missing bucket with `objectstore_create_bucket` (`bucket`, `location`) or inspect one with `objectstore_bucket_info`.
+   Verify `objectstore_bucket_exists` returns true for it.
+3. Read the current rules with `objectstore_get_bucket_lifecycle` before changing anything, because `objectstore_put_bucket_lifecycle` replaces the whole rule set.
+   Verify every rule you keep is carried into the new `rules` list.
+4. Write lifecycle rules with `objectstore_put_bucket_lifecycle` or set versioning with `objectstore_put_bucket_versioning` (`status` Enabled or Suspended).
+   Verify by reading back with `objectstore_get_bucket_lifecycle` or `objectstore_get_bucket_versioning` and report the rule ids.
+5. Delete an empty bucket only on explicit request with `objectstore_delete_bucket` (`bucket`, `confirm=true`).
+   Verify with `objectstore_bucket_exists` that the bucket is gone.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `not entitled` on a store | The identity lacks `objectstore:<store>` or `objectstore:admin` | Report the code, and ask the operator to grant the store role for that identity before calling again |
+| `STORAGE_UNSUPPORTED` on lifecycle or versioning | The store is a filesystem or non-s3 backend | Check `objectstore_capabilities`, and move the work to an `s3` store named by `objectstore_list_stores` |
+| `STORAGE_BUCKET_NOT_EMPTY` on delete | Objects remain in the bucket | List them with `objectstore_list_objects`, and clear them through objectstore-object-operations (prefix delete with `dry_run`) before deleting |
 
 ## Tools
 | Operation | Tool | Key parameters |
