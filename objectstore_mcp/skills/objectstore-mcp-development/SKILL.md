@@ -46,6 +46,27 @@ owning spec row in the commit trailer.
   in the package-data contract. Put `Spec: <ID>` and the assisting-agent trailer
   on consecutive final commit message lines.
 
+## Steps
+
+1. Find the owning spec row with `git grep -n "<term>" -- specs`.
+   Verify a row matches before editing any code, and extend that row rather than adding new requirement text.
+2. Sync the pinned environment with `uv sync --locked`.
+   Verify the command exits 0 with no lock changes.
+3. Make the change in `objectstore_mcp/` and bind it to a focused test such as `uv run --locked --extra test pytest tests/test_safety.py -q`.
+   Verify the test passes.
+4. Run the shared gates with `uvx pre-commit run --all-files`.
+   Verify every hook reports Passed.
+5. Review the diff with `git status --short` and stage only reviewed paths with `git add -- <path>`.
+   Verify `git diff --cached --name-status` lists only intended files before committing with the `Spec:` trailer.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `uv sync --locked` fails | `uv.lock` is out of step with `pyproject.toml` | Run `uv lock` to refresh it, review the lock diff, and rerun `uv sync --locked` |
+| A pre-commit hook fails | Formatting, spelling or a repository gate was violated | Read the hook output, fix the named file, and rerun `uvx pre-commit run --all-files` |
+| A test needs a cloud provider | The test reaches a live backend instead of the filesystem backend | Switch the test to the filesystem backend with a temporary directory, and keep credentials out of fixtures |
+
 ## Setup and gates
 
 Use the pinned environment and shared gates from the checkout root:

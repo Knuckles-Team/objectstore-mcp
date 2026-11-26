@@ -2,7 +2,7 @@
 name: objectstore-business-asset-store
 skill_type: skill
 description: >-
-  Run the business's durable asset store on objectstore-mcp: file generated creative outputs, video masters and social-media uploads under one key layout, tag each asset's stage, set retention, and hand an asset on to the file-share and social-scheduling steps with a presigned URL. Use when the agent must store, find, approve or hand off a business media asset. Do NOT use for generic object chores (objectstore-object-operations) or the file-share and social-scheduling steps themselves (their connectors' skills).
+  Run the business's durable asset store on objectstore-mcp: file generated creative outputs, video masters and social-media uploads under one key layout, tag each asset's stage, set retention, and hand an asset on to the file-share and social-scheduling steps with a presigned URL. Use when the agent must store, find, approve or hand off a business media asset. Not for generic object chores.
 license: MIT
 tags: [objectstore, business, media, assets, handoff, mcp]
 metadata:
@@ -11,10 +11,33 @@ metadata:
 ---
 # ObjectStore Business Asset Store
 
+Scope: Run the business's durable asset store on objectstore-mcp: file generated creative outputs, video masters and social-media uploads under one key layout, tag each asset's stage, set retention, and hand an asset on to the file-share and social-scheduling steps with a presigned URL. Use when the agent must store, find, approve or hand off a business media asset. Do NOT use for generic object chores (objectstore-object-operations) or the file-share and social-scheduling steps themselves (their connectors' skills).
+
 ## Role
 The object store is the system of record for business media bytes. Every other step
 (the file share people review in, the social scheduler that posts) receives a copy or a
 presigned URL of an object kept here, so a lost or edited copy can always be recovered.
+
+## Steps
+
+1. Provision any missing bucket with `objectstore_create_bucket` for `video-masters` and `social-media`.
+   Verify both names appear in a fresh `objectstore_list_buckets`.
+2. Apply retention with `objectstore_put_bucket_versioning` (`video-masters`, `status=Enabled`) and `objectstore_put_bucket_lifecycle`.
+   Verify with `objectstore_get_bucket_versioning` and `objectstore_get_bucket_lifecycle` that the rules read back.
+3. File and tag an asset with `objectstore_put_object` or `objectstore_upload_file` plus `objectstore_put_object_tags` (`stage=draft`, `source`).
+   Verify with `objectstore_head_object` and report bucket, key, size and etag.
+4. Hand the asset on with `objectstore_presigned_url` after locating it via `objectstore_list_objects` (`method=GET`, `expires_in` at most 604800).
+   Verify the returned `expires_at` is within 7 days.
+5. Advance the stage tag with `objectstore_put_object_tags` when the next step reports back.
+   Verify with `objectstore_get_object_tags` that `stage` is `approved`, `scheduled` or `published` as reported.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `not entitled` or `STORAGE_NOT_FOUND` | The identity lacks the store role, or the bucket was never provisioned | Run `objectstore_list_stores` and `objectstore_list_buckets`, create the missing bucket with `objectstore_create_bucket`, and ask the operator for the store role if still refused |
+| Presigned URL refused with `STORAGE_UNSUPPORTED` | The store is a filesystem backend that cannot presign | Switch to an `s3` store from `objectstore_list_stores`, and mint the URL there |
+| Handoff step cannot find the object | Wrong bucket or key, or the key layout was not followed | Re-run `objectstore_list_objects` by prefix, and pass the exact `bucket` and `key` shown with the etag |
 
 ## Key layout
 | Asset | Bucket | Key | Retention |
